@@ -5,7 +5,7 @@
 # $Id$
 
 DIE=true
-PROJECT="scli"
+PROJECT="gsnmp"
 
 
 VER=`autoconf --version | grep '^autoconf' | sed 's/.*)//'`
