@@ -1,0 +1,21 @@
+Begin3
+Title:		gsnmp
+Version:	@VERSION@
+Entered-date:	@ISODATE@
+Description:	A glib-based SNMP protocol implementation.
+		@configure_input@
+		Please edit gsnmp.lsm.in to fix the Keywords and
+		Primary-site entries, add several more lines of
+		description here if appropriate, and to delete these
+		instructions.
+Keywords:	[substitute your keywords here]
+Author: 	schoenw@informatik.uni-osnabrueck.de (Juergen Schoenwaelder)
+Maintained-by:	schoenw@informatik.uni-osnabrueck.de (Juergen Schoenwaelder)
+Primary-site:	metlab.unc.edu pub/Linux/apps/some/directory
+		31k gsnmp-@VERSION@.tar.gz
+		500  gsnmp.lsm
+Alternate-site: 
+Original-site:  
+Platforms:      
+Copying-policy:	GNU copyleft
+End

@@ -1,0 +1,7 @@
+dnl AM_PATH_GSNMP()
+dnl 
+
+AC_DEFUN(AM_PATH_GSNMP,
+[
+  PKG_CHECK_MODULES(GSNMP, glib-2.0 >= 2.0.1)
+])
