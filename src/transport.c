@@ -95,7 +95,7 @@ tcp_ipv4_receive_message()
     addr = gnet_tcp_socket_get_remote_inetaddr(tcp_ipv4_socket);
     channel = gnet_tcp_socket_get_io_channel(tcp_ipv4_socket);
     if (! channel) {
-	g_error("retrieving snmp over tcp/ipv4 socket failed");
+	g_warning("retrieving snmp over tcp/ipv4 socket failed");
 	return;
     }
 
@@ -256,7 +256,7 @@ upd_ipv4_init(gboolean dobind)		/* xxx dobind is not used */
 
     udp_ipv4_socket = gnet_udp_socket_new();
     if (! udp_ipv4_socket) {
-	g_error("opening snmp over udp/ipv4 socket failed");
+	g_warning("opening snmp over udp/ipv4 socket failed");
 	return FALSE;
     }
 
@@ -342,7 +342,7 @@ udp_ipv6_init(gboolean dobind)
 
     udp_ipv6_socket = gnet_udp_socket_new_full(addr, 0);
     if (! udp_ipv6_socket) {
-	g_error("opening snmp over udp/ipv6 socket failed");
+	g_warning("opening snmp over udp/ipv6 socket failed");
 	return FALSE;
     }
 
