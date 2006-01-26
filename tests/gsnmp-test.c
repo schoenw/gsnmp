@@ -81,7 +81,7 @@ test_ber_std_pdu()
     GNetSnmpBer *asn1;
     GNetSnmpPdu pdu1, pdu2;
     guchar buf[1234], *start;
-    gint len;
+    gsize len;
 
     guchar x[] = {
 	0xA1, 0x0B,
@@ -346,8 +346,9 @@ test_ber_gint32()
     GError *error = NULL;
     GNetSnmpBer *asn1;
     guchar buf[1234], *start, *eoi;
-    gint i, len;
+    gint i;
     guint cls, con, tag;
+    gsize len;
     
     gint32 a, v[] = {
 	-2147483648L, -2147483647L, -1, 0, 1, 2147483646L, 2147483647L
@@ -394,8 +395,9 @@ test_ber_gint64()
     GError *error = NULL;
     GNetSnmpBer *asn1;
     guchar buf[1234], *start, *eoi;
-    gint i, len;
+    gint i;
     guint cls, con, tag;
+    gsize len;
     
     gint64 a, v[] = {
 	-9223372036854775808LL, -2147483648LL, -2147483647LL,
@@ -446,8 +448,9 @@ test_ber_guint32()
     GError *error = NULL;
     GNetSnmpBer *asn1;
     guchar buf[1234], *start, *eoi;
-    gint i, len;
+    gint i;
     guint cls, con, tag;
+    gsize len;
 
     guint32 a, v[] = {
 	0, 1, 4294967294UL, 4294967295UL
@@ -491,8 +494,9 @@ test_ber_guint64()
     GError *error = NULL;
     GNetSnmpBer *asn1;
     guchar buf[1234], *start, *eoi;
-    gint i, len;
+    gint i;
     guint cls, con, tag;
+    gsize len;
 
     guint64 a, v[] = {
 	0, 1, 4294967295UL, 4294967296ULL, 18446744073709551615ULL
@@ -537,11 +541,11 @@ test_ber_octets()
     GError *error = NULL;
     GNetSnmpBer *asn1;
     guchar buf[1234], *start, *eoi;
-    gint i, len;
+    gint i;
     guint cls, con, tag;
-    gsize a_len;
+    gsize len, a_len;
 
-    guchar *a, *v[] = {
+    gchar *a, *v[] = {
 	"", "a", "abcdefghijklmnopqrstuvwxyz"
     };
 

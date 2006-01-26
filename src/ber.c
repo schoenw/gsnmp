@@ -99,7 +99,7 @@ gnet_snmp_ber_dec_new(guchar *buf, gsize buf_len)
  */
 
 void 
-gnet_snmp_ber_enc_delete(GNetSnmpBer *asn1, guchar **buf, guint *len)
+gnet_snmp_ber_enc_delete(GNetSnmpBer *asn1, guchar **buf, gsize *len)
 {
     if (buf) *buf = asn1->pointer;
     if (len) *len = asn1->end - asn1->pointer;
@@ -117,7 +117,7 @@ gnet_snmp_ber_enc_delete(GNetSnmpBer *asn1, guchar **buf, guint *len)
  */
 
 void 
-gnet_snmp_ber_dec_delete(GNetSnmpBer *asn1, guchar **buf, guint *len)
+gnet_snmp_ber_dec_delete(GNetSnmpBer *asn1, guchar **buf, gsize *len)
 {
     if (buf) *buf = asn1->pointer;
     if (len) *len = asn1->end - asn1->pointer;
@@ -448,7 +448,8 @@ gnet_snmp_ber_dec_header(GNetSnmpBer *asn1, guchar **eoc,
 			 guint *cls, guint *con, guint *tag,
 			 GError **error)
 {
-    guint def, len;
+    guint def;
+    gsize len;
 
     g_assert(asn1);
     

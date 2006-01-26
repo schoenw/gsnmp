@@ -1,4 +1,10 @@
-SUBDIRS = src tests examples
+#
+# Makefile.am --
+#
+#      Template to generate the toplevel Makefile.in using automake.
+#
+
+SUBDIRS			= src tests examples
 
 EXTRA_DIST		= gsnmp.m4 gsnmp.pc
 

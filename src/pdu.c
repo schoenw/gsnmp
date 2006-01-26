@@ -346,7 +346,8 @@ gboolean
 gnet_snmp_ber_dec_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind **vb,
 			  GError **error)
 {
-    guint cls, con, tag, len, idlen;
+    guint cls, con, tag;
+    gsize len, idlen;
     GNetSnmpVarBindType type;
     guchar *eoc, *end, *p = NULL;
     guint32 *lp = NULL;
@@ -700,8 +701,7 @@ gnet_snmp_ber_dec_standard_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
 	}
         return FALSE;
     }
-    if (!gnet_snmp_ber_dec_gint32(asn1, end, (guint32 *) &pdu->request_id,
-				  error))
+    if (!gnet_snmp_ber_dec_gint32(asn1, end, &pdu->request_id, error))
         return FALSE;
 
     if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error))
@@ -717,8 +717,7 @@ gnet_snmp_ber_dec_standard_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
 	}
         return FALSE;
     }
-    if (!gnet_snmp_ber_dec_guint32(asn1, end,
-				   (guint32 *) &pdu->error_status, error))
+    if (!gnet_snmp_ber_dec_gint32(asn1, end, &pdu->error_status, error))
         return FALSE;
 
     if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error))
@@ -734,7 +733,7 @@ gnet_snmp_ber_dec_standard_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
 	}
         return FALSE;
     }
-    if (!gnet_snmp_ber_dec_guint32(asn1, end, &pdu->error_index, error))
+    if (!gnet_snmp_ber_dec_gint32(asn1, end, &pdu->error_index, error))
         return FALSE;
 
     if (!gnet_snmp_ber_dec_varbind_list(asn1, &pdu->varbind_list, error))

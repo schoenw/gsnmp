@@ -209,7 +209,7 @@ sendPdu(GNetSnmpTDomain transportDomain, GInetAddr *transportAddress,
   GNetSnmpTDomain     destTransportDomain;
   GInetAddr          *destTransportAddress;  
   gpointer            outgoingMessage;
-  guint               outgoingMessageLength;
+  gsize               outgoingMessageLength;
   guint               sendPduHandle;
   struct g_message   *msg_model;
 
@@ -327,7 +327,7 @@ returnResponsePdu(guint messageProcessingModel, guint securityModel,
   GNetSnmpTDomain     destTransportDomain;
   GInetAddr          *destTransportAddress;
   gpointer            outgoingMessage;
-  guint               outgoingMessageLength;
+  gsize               outgoingMessageLength;
   struct g_message   *msg_model;
 
   if (!message_models || !(msg_model = g_hash_table_lookup(message_models,

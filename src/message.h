@@ -76,7 +76,7 @@ struct g_message
                          GNetSnmpTDomain *outTransportDomain,
                          GInetAddr **outTransportAddress,
                          gpointer *outgoingMessage,
-                         guint *outgoingMessageLength,
+                         gsize *outgoingMessageLength,
 			 GError **error);
      gboolean (*prepareResponseMessage) (
                          guint messageProcessingModel,
@@ -93,12 +93,12 @@ struct g_message
                          GNetSnmpTDomain *outTransportDomain,
                          GInetAddr **outTransportAddress,
                          gpointer *outgoingMessage,
-                         guint *outgoingMessageLength);
+                         gsize *outgoingMessageLength);
      gboolean (*prepareDataElements) (
                          GNetSnmpTDomain transportDomain,
                          GInetAddr *transportAddress,
                          gpointer wholeMsg, 
-                         int wholeMsgLength,
+                         gsize wholeMsgLength,
                          guint *messageProcessingModel, 
                          guint *securityModel,
                          GString **securityName, 

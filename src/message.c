@@ -113,7 +113,7 @@ snmpv1_prepare_outgoing_message(GNetSnmpTDomain transportDomain,
                          GNetSnmpTDomain *outTransportDomain,
                          GInetAddr **outTransportAddress,
                          gpointer *outgoingMessage, 
-                         guint *outgoingMessageLength,
+                         gsize *outgoingMessageLength,
 		 	 GError **error)
 {
     GNetSnmpBer *asn1;
@@ -201,7 +201,7 @@ snmpv1_prepare_response_message(guint messageProcessingModel,
                          GNetSnmpTDomain *outTransportDomain,
                          GInetAddr **outTransportAddress,
                          gpointer *outgoingMessage,
-                         guint *outgoingMessageLength)
+                         gsize *outgoingMessageLength)
 {
     if (messageProcessingModel != PMODEL_SNMPV1)
 	return FALSE; /* This should never happen. Something fishy going on? */
@@ -212,7 +212,7 @@ snmpv1_prepare_response_message(guint messageProcessingModel,
 static gboolean
 snmpv1_prepare_data_elements(GNetSnmpTDomain transportDomain,
                          GInetAddr *transportAddress,
-                         gpointer wholeMsg, int wholeMsgLength,
+                         gpointer wholeMsg, gsize wholeMsgLength,
                          guint *messageProcessingModel, guint *securityModel,
                          GString **securityName, int *securityLevel,
                          GString **contextEngineID, GString **contextName,
@@ -250,13 +250,13 @@ snmpv1_prepare_data_elements(GNetSnmpTDomain transportDomain,
     if (cls != GNET_SNMP_ASN1_UNI || con != GNET_SNMP_ASN1_PRI || tag != GNET_SNMP_ASN1_OTS)
 	return FALSE;
     if (!gnet_snmp_ber_dec_octets(asn1, end, (guchar **)&((*securityName)->str), 
-				  (guint *) &((*securityName)->len), error))
+				  &((*securityName)->len), error))
 	return FALSE;
     if (!gnet_snmp_ber_dec_pdu_v1(asn1, PDU, error))
 	return FALSE;
     if (!gnet_snmp_ber_dec_eoc(asn1, eoc, error))
 	return FALSE;
-    gnet_snmp_ber_dec_delete(asn1, wholeMsg, (guint *) &wholeMsgLength);
+    gnet_snmp_ber_dec_delete(asn1, wholeMsg, &wholeMsgLength);
     
     if (PDU->type == GNET_SNMP_PDU_RESPONSE) 
 	*sendPduHandle = -1;
@@ -289,7 +289,7 @@ snmpv2c_prepare_outgoing_message(GNetSnmpTDomain transportDomain,
                          GNetSnmpTDomain *outTransportDomain,
                          GInetAddr **outTransportAddress,
                          gpointer *outgoingMessage, 
-                         guint *outgoingMessageLength,
+                         gsize *outgoingMessageLength,
 			 GError **error)
 {
     GNetSnmpBer *asn1;
@@ -376,12 +376,12 @@ snmpv2c_prepare_response_message(guint messageProcessingModel,
                          guint securityModel, GString *securityName,
                          int securityLevel, GString *contextEngineID,
                          GString *contextName, guint pduVersion, GNetSnmpPdu *PDU,
-                         guint maxSizeResponseScopedPDU,
+                         gint maxSizeResponseScopedPDU,
                          gpointer stateReference, guint statusInformation,
                          GNetSnmpTDomain *outTransportDomain,
                          GInetAddr **outTransportAddress,
                          gpointer *outgoingMessage,
-                         guint *outgoingMessageLength)
+                         gsize *outgoingMessageLength)
 {
     return FALSE;
 }
@@ -389,7 +389,7 @@ snmpv2c_prepare_response_message(guint messageProcessingModel,
 static gboolean
 snmpv2c_prepare_data_elements(GNetSnmpTDomain transportDomain,
                          GInetAddr *transportAddress,
-                         gpointer wholeMsg, int wholeMsgLength,
+                         gpointer wholeMsg, gsize wholeMsgLength,
                          guint *messageProcessingModel, guint *securityModel,
                          GString **securityName, int *securityLevel,
                          GString **contextEngineID, GString **contextName,
@@ -427,13 +427,13 @@ snmpv2c_prepare_data_elements(GNetSnmpTDomain transportDomain,
     if (cls != GNET_SNMP_ASN1_UNI || con != GNET_SNMP_ASN1_PRI || tag != GNET_SNMP_ASN1_OTS)
 	return FALSE;
     if (!gnet_snmp_ber_dec_octets (asn1, end, (guchar **)&((*securityName)->str), 
-				   (guint *) &((*securityName)->len), error))
+				   &((*securityName)->len), error))
 	return FALSE;
     if (!gnet_snmp_ber_dec_pdu_v2(asn1, PDU, error))
 	return FALSE;
     if (!gnet_snmp_ber_dec_eoc(asn1, eoc, error))
 	return FALSE;
-    gnet_snmp_ber_dec_delete(asn1, wholeMsg, (guint *) &wholeMsgLength);
+    gnet_snmp_ber_dec_delete(asn1, wholeMsg, &wholeMsgLength);
     
     if (PDU->type == GNET_SNMP_PDU_RESPONSE) 
 	*sendPduHandle = -1;
@@ -464,7 +464,7 @@ snmpv3_prepare_outgoing_message(GNetSnmpTDomain transportDomain,
                          GNetSnmpTDomain *outTransportDomain,
                          GInetAddr **outTransportAddress,
                          gpointer *outgoingMessage, 
-                         guint *outgoingMessageLength,
+                         gsize *outgoingMessageLength,
 			 GError **error)
 {
     GNetSnmpBer *asn1;
@@ -581,7 +581,7 @@ snmpv3_prepare_response_message(guint messageProcessingModel,
                          GNetSnmpTDomain *outTransportDomain,
                          GInetAddr **outTransportAddress,
                          gpointer *outgoingMessage,
-                         guint *outgoingMessageLength)
+                         gsize *outgoingMessageLength)
 {
     return FALSE;
 }
@@ -589,7 +589,7 @@ snmpv3_prepare_response_message(guint messageProcessingModel,
 static gboolean
 snmpv3_prepare_data_elements(GNetSnmpTDomain transportDomain,
                          GInetAddr *transportAddress,
-                         gpointer wholeMsg, int wholeMsgLength,
+                         gpointer wholeMsg, gsize wholeMsgLength,
                          guint *messageProcessingModel, guint *securityModel,
                          GString **securityName, int *securityLevel,
                          GString **contextEngineID, GString **contextName,
@@ -623,13 +623,13 @@ snmpv3_prepare_data_elements(GNetSnmpTDomain transportDomain,
     if (cls != GNET_SNMP_ASN1_UNI || con != GNET_SNMP_ASN1_PRI || tag != GNET_SNMP_ASN1_OTS)
 	return FALSE;
     if (!gnet_snmp_ber_dec_octets(asn1, end, (guchar **)&((*securityName)->str), 
-				  (guint *) &((*securityName)->len), error))
+				  &((*securityName)->len), error))
 	return FALSE;
     if (!gnet_snmp_ber_dec_pdu_v2(asn1, PDU, error))
 	return FALSE;
     if (!gnet_snmp_ber_dec_eoc(asn1, eoc, error))
 	return FALSE;
-    gnet_snmp_ber_dec_delete(asn1, wholeMsg, (guint *) &wholeMsgLength);
+    gnet_snmp_ber_dec_delete(asn1, wholeMsg, &wholeMsgLength);
     
     if (PDU->type == GNET_SNMP_PDU_RESPONSE) 
 	*sendPduHandle = -1;
