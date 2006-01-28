@@ -1,6 +1,6 @@
 # gsnmp.spec
 #
-# Copyright (c) 2002 Juergen Schoenwaelder schoenw@informatik.uni-osnabrueck.de
+# Copyright (c) 2002-2006 Juergen Schoenwaelder <j.schoenwaelder@iu-bremen.de>
 #
 %define name gsnmp
 %define version @VERSION@
