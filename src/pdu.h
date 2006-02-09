@@ -64,7 +64,7 @@ struct _GNetSnmpVarBind
 	guint8  *ui8v;			/*  8 bit unsigned vector */
 	guint32 *ui32v;			/* 32 bit unsigned vector */
     }			value;		/* value of the variable */
-    gsize		value_len;	/* length of a vector in byte */
+    gsize		value_len;	/* length of a vector in bytes */
 };
 
 GNetSnmpVarBind* gnet_snmp_varbind_new	(const guint32 *oid,

@@ -34,7 +34,7 @@
  *
  * The encoding and decoding API functions are also tailored to handle
  * just the subset of ASN.1 data types actually used by SNMP. Note
- * that ASN.1 for example allows uncontrained INTEGER values while
+ * that ASN.1 for example allows unconstrained INTEGER values while
  * this library has several API functions for various concrete size
  * constrained types of INTEGER values.
  */
