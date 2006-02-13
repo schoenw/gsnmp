@@ -37,29 +37,29 @@ GNetSnmpEnum const gnet_snmp_enum_version_table[] = {
 
 
 GNetSnmpEnum const gnet_snmp_enum_error_table[] = {
-    { GNET_SNMP_ERR_DONE,		"done" },
-    { GNET_SNMP_ERR_PROCEDURE,		"procedureError" },
-    { GNET_SNMP_ERR_INTERNAL,		"internalError" },
-    { GNET_SNMP_ERR_NORESPONSE,		"noResponse" },
-    { GNET_SNMP_ERR_NOERROR,		"noError" },
-    { GNET_SNMP_ERR_TOOBIG,		"tooBig" },
-    { GNET_SNMP_ERR_NOSUCHNAME,		"noSuchName"},
-    { GNET_SNMP_ERR_BADVALUE,		"badValue" },
-    { GNET_SNMP_ERR_READONLY,		"readOnly" },
-    { GNET_SNMP_ERR_GENERROR,		"genErr" },
-    { GNET_SNMP_ERR_NOACCESS,		"noAccess" },
-    { GNET_SNMP_ERR_WRONGTYPE,		"wrongType" },
-    { GNET_SNMP_ERR_WRONGLENGTH,	"wrongLength" },
-    { GNET_SNMP_ERR_WRONGENCODING,	"wrongEncoding" },
-    { GNET_SNMP_ERR_WRONGVALUE,		"wrongValue" },
-    { GNET_SNMP_ERR_NOCREATION,		"noCreation" },
-    { GNET_SNMP_ERR_INCONSISTENTVALUE,	"inconsistentValue" },
-    { GNET_SNMP_ERR_RESOURCEUNAVAILABLE,"resourceUnavailable" },
-    { GNET_SNMP_ERR_COMMITFAILED,	"commitFailed" },
-    { GNET_SNMP_ERR_UNDOFAILED,		"undoFailed" },
-    { GNET_SNMP_ERR_AUTHORIZATIONERROR,	"authorizationError" },
-    { GNET_SNMP_ERR_NOTWRITABLE,	"notWritable" },
-    { GNET_SNMP_ERR_INCONSISTENTNAME,	"inconsistentName" },
+    { GNET_SNMP_PDU_ERR_DONE,			"done" },
+    { GNET_SNMP_PDU_ERR_PROCEDURE,		"procedureError" },
+    { GNET_SNMP_PDU_ERR_INTERNAL,		"internalError" },
+    { GNET_SNMP_PDU_ERR_NORESPONSE,		"noResponse" },
+    { GNET_SNMP_PDU_ERR_NOERROR,		"noError" },
+    { GNET_SNMP_PDU_ERR_TOOBIG,			"tooBig" },
+    { GNET_SNMP_PDU_ERR_NOSUCHNAME,		"noSuchName"},
+    { GNET_SNMP_PDU_ERR_BADVALUE,		"badValue" },
+    { GNET_SNMP_PDU_ERR_READONLY,		"readOnly" },
+    { GNET_SNMP_PDU_ERR_GENERROR,		"genErr" },
+    { GNET_SNMP_PDU_ERR_NOACCESS,		"noAccess" },
+    { GNET_SNMP_PDU_ERR_WRONGTYPE,		"wrongType" },
+    { GNET_SNMP_PDU_ERR_WRONGLENGTH,		"wrongLength" },
+    { GNET_SNMP_PDU_ERR_WRONGENCODING,		"wrongEncoding" },
+    { GNET_SNMP_PDU_ERR_WRONGVALUE,		"wrongValue" },
+    { GNET_SNMP_PDU_ERR_NOCREATION,		"noCreation" },
+    { GNET_SNMP_PDU_ERR_INCONSISTENTVALUE,	"inconsistentValue" },
+    { GNET_SNMP_PDU_ERR_RESOURCEUNAVAILABLE,	"resourceUnavailable" },
+    { GNET_SNMP_PDU_ERR_COMMITFAILED,		"commitFailed" },
+    { GNET_SNMP_PDU_ERR_UNDOFAILED,		"undoFailed" },
+    { GNET_SNMP_PDU_ERR_AUTHORIZATIONERROR,	"authorizationError" },
+    { GNET_SNMP_PDU_ERR_NOTWRITABLE,		"notWritable" },
+    { GNET_SNMP_PDU_ERR_INCONSISTENTNAME,	"inconsistentName" },
     { 0, 0 }
 };
 
@@ -395,6 +395,8 @@ gnet_snmp_attr_set(const GNetSnmp *s, GList **vbl,
     *vbl = g_list_reverse(*vbl);
 }
 
+
+
 gint
 gnet_snmp_compare_oids(guint32 *oid1, gsize len1, guint32 *oid2, gsize len2)
 {
@@ -410,17 +412,19 @@ gnet_snmp_compare_oids(guint32 *oid1, gsize len1, guint32 *oid2, gsize len2)
     if (len1 < len2) return -1;
     if (len2 < len1) return 1;
     return 0;
-    
 }
-    
+
+
+
 GURI*
-gnet_snmp_parse_uri(const gchar *string)
+gnet_snmp_parse_uri(const gchar *uri_string)
 {
     GURI *uri;
+    gchar *string;
     
-    g_return_val_if_fail(string, NULL);
+    g_return_val_if_fail(uri_string, NULL);
 
-    string = g_strdup(string);
+    string = g_strdup(uri_string);
 
     /* First, try to treat the string as a fully specified SNMP
        URI. If that fails, try to treat the string as something
@@ -434,13 +438,8 @@ gnet_snmp_parse_uri(const gchar *string)
 	uri = NULL;
     }
     if (uri && strcmp(uri->scheme, "snmp") != 0) {
-	if (uri->hostname) {
-	    gnet_uri_delete(uri);
-	    goto done;
-	} else {
-	    gnet_uri_delete(uri);
-	    uri = NULL;
-	}
+	gnet_uri_delete(uri);
+	return NULL;
     }
     
     if (! uri) {
@@ -474,7 +473,276 @@ gnet_snmp_parse_uri(const gchar *string)
 	gnet_uri_set_port(uri, 161);
     }
 
- done:
     g_free(string);
     return uri;
+}
+
+
+GQuark
+gnet_snmp_uri_error_quark(void)
+{
+    static GQuark quark = 0;
+    if (quark == 0) {
+	quark = g_quark_from_static_string("gnet-snmp-uri-error-quark");
+    }
+    return quark;
+}
+
+    
+gboolean
+gnet_snmp_parse_path(const gchar *path,
+		     GList **vbl,
+		     GNetSnmpUriType *type,
+		     GError **error)
+{
+    gint oid_len, state;
+    gchar *s, *oids;
+    GScanner *sc;
+    GTokenType token;
+    GTokenValue value;
+    guint32 oid[GNET_SNMP_SIZE_OBJECTID];
+
+#define STATE_START	0x00
+#define STATE_INOID	0x01
+#define STATE_INDOT	0x02
+#define STATE_INLIST	0x03
+#define STATE_INLISTOID	0x04
+#define STATE_INLISTDOT 0x05
+#define STATE_OUTLIST	0x06
+#define STATE_DONE	0x07
+    
+    if (path[0] == '/') path++;
+
+    s = strchr(path, '/');
+    if (! s) {
+	if (error) {
+	    g_set_error(error,
+			GNET_SNMP_URI_ERROR,
+			GNET_SNMP_URI_ERROR_NOOIDS,
+			"missing oids component in snmp uri"); 
+	}
+	return FALSE;
+    }
+
+    oids = s + 1;
+    s = strchr(oids, '/');
+    if (s) {
+	if (error) {
+	    g_set_error(error,
+			GNET_SNMP_URI_ERROR,
+			GNET_SNMP_URI_ERROR_TRAIL,
+			"trailing path elements in snmp uri"); 
+	}
+	return FALSE;
+    }
+
+    /* now we are ready to actually scan the oids component */
+
+    sc = g_scanner_new(NULL);
+    sc->config->scan_float = 0;
+    g_scanner_input_text(sc, oids, strlen(oids));
+    state = STATE_START;
+    *type = GNET_SNMP_URI_GET;
+    while (! g_scanner_eof(sc)) {
+
+	token = g_scanner_get_next_token(sc);
+	value = g_scanner_cur_value(sc);
+
+	if (token == G_TOKEN_EOF) {
+	    if (state == STATE_OUTLIST
+		|| state == STATE_INOID
+		|| state == STATE_DONE) {
+		if (state == STATE_INOID) {
+		    GNetSnmpVarBind *vb;
+		    vb = gnet_snmp_varbind_new(oid, oid_len,
+					       GNET_SNMP_VARBIND_TYPE_NULL,
+					       NULL, 0);
+		    *vbl = g_list_append(*vbl, vb);
+		    oid_len = 0;
+		}
+	    } else {
+		if (error) {
+		    g_set_error(error,
+				GNET_SNMP_URI_ERROR,
+				GNET_SNMP_URI_ERROR_EOF,
+				"premature end of snmp uri");
+		}
+		break;
+	    }
+	} else if (token == G_TOKEN_LEFT_PAREN) {
+	    if (state == STATE_START) {
+		state = STATE_INLIST;
+	    } else {
+		if (error) {
+		    g_set_error(error,
+				GNET_SNMP_URI_ERROR,
+				GNET_SNMP_URI_ERROR_LPAREN,
+				"illegal left parenthesis in snmp uri");
+		}
+		break;
+	    }
+	} else if (token == G_TOKEN_RIGHT_PAREN) {
+	    if (state == STATE_INLISTOID) {
+		GNetSnmpVarBind *vb;
+		vb = gnet_snmp_varbind_new(oid, oid_len,
+					   GNET_SNMP_VARBIND_TYPE_NULL,
+					   NULL, 0);
+		*vbl = g_list_append(*vbl, vb);
+		oid_len = 0;
+		state = STATE_OUTLIST;
+	    } else {
+		if (error) {
+		    g_set_error(error,
+				GNET_SNMP_URI_ERROR,
+				GNET_SNMP_URI_ERROR_RPAREN,
+				"illegal right parenthesis in snmp uri");
+		}
+		break;
+	    }
+	} else if (token == G_TOKEN_COMMA) {
+	    if (state == STATE_INLISTOID) {
+		GNetSnmpVarBind *vb;
+		vb = gnet_snmp_varbind_new(oid, oid_len,
+					   GNET_SNMP_VARBIND_TYPE_NULL,
+					   NULL, 0);
+		*vbl = g_list_append(*vbl, vb);
+		oid_len = 0;
+		state = STATE_INLIST;
+	    } else {
+		if (error) {
+		    g_set_error(error,
+				GNET_SNMP_URI_ERROR,
+				GNET_SNMP_URI_ERROR_COMMA,
+				"illegal comma in snmp uri");
+		}
+		break;
+	    }
+	} else if (token == G_TOKEN_INT) {
+	    if (state == STATE_START || state == STATE_INLIST
+		|| state == STATE_INDOT || state == STATE_INLISTDOT) {
+		if (oid_len < GNET_SNMP_SIZE_OBJECTID) {
+		    oid[oid_len++] = value.v_int;
+		}
+		state = (state == STATE_START || state == STATE_INDOT) ?
+		    STATE_INOID : STATE_INLISTOID;
+	    } else {
+		if (error) {
+		    g_set_error(error,
+				GNET_SNMP_URI_ERROR,
+				GNET_SNMP_URI_ERROR_INT,
+				"illegal number in snmp uri");
+		}
+		break;
+	    }
+	} else if (token == '.') {
+	    if (state == STATE_INOID
+		|| state == STATE_INLISTOID
+		|| state == STATE_OUTLIST) {
+		if (state == STATE_INOID) {
+		    state = STATE_INDOT;
+		} else if (state == STATE_INLISTOID) {
+		    state = STATE_INLISTDOT;
+		} else {
+		    state = STATE_INDOT;
+		}
+	    } else {
+		if (error) {
+		    g_set_error(error,
+				GNET_SNMP_URI_ERROR,
+				GNET_SNMP_URI_ERROR_DOT,
+				"illegal dot in snmp uri");
+		}
+		break;
+	    }
+	} else if (token == '*') {
+	    if (state == STATE_INDOT) {
+		GNetSnmpVarBind *vb;
+		vb = gnet_snmp_varbind_new(oid, oid_len,
+					   GNET_SNMP_VARBIND_TYPE_NULL,
+					   NULL, 0);
+		oid_len = 0;
+		*vbl = g_list_append(*vbl, vb);
+		*type = GNET_SNMP_URI_WALK;
+		state = STATE_DONE;
+	    } else {
+		if (error) {
+		    g_set_error(error,
+				GNET_SNMP_URI_ERROR,
+				GNET_SNMP_URI_ERROR_STAR,
+				"illegal asterisk in snmp uri");
+		}
+		break;
+	    }
+	} else if (token == '+') {
+	    if (state == STATE_INOID || state == STATE_OUTLIST) {
+		if (state == STATE_INOID) {
+		    GNetSnmpVarBind *vb;
+		    vb = gnet_snmp_varbind_new(oid, oid_len,
+					       GNET_SNMP_VARBIND_TYPE_NULL,
+					       NULL, 0);
+		    oid_len = 0;
+		    *vbl = g_list_append(*vbl, vb);
+		}
+		*type = GNET_SNMP_URI_NEXT;
+		state = STATE_DONE;
+	    } else {
+		if (error) {
+		    g_set_error(error,
+				GNET_SNMP_URI_ERROR,
+				GNET_SNMP_URI_ERROR_PLUS,
+				"illegal plus in snmp uri");
+		}
+		break;
+	    }
+	} else {
+	    if (error) {
+		g_set_error(error,
+			    GNET_SNMP_URI_ERROR,
+			    GNET_SNMP_URI_ERROR_TOKEN,
+			    "illegal token in snmp uri");
+	    }
+	    break;
+	}
+    }
+
+    if (! g_scanner_eof(sc)) {
+	g_scanner_destroy(sc);
+	return FALSE;
+    }
+
+    g_scanner_destroy(sc);
+    return TRUE;
+}
+
+/** Returns a #GOptionGroup for gsnmp commandline arguments.
+ *
+ * Returns a #GOptionGroup for the commandline arguments recognized by
+ * gsnmp. You should add this group to your #GOptionContext with
+ * #g_option_context_add_group(), if you are using
+ * #g_option_context_parse() to parse your commandline arguments.
+ */
+
+static GOptionEntry gsnmp_args[] = {
+    { "gsnmp-debug", 0, 0, G_OPTION_ARG_NONE, NULL,
+      "Set the debug level to D", "D" },
+    { "gsnmp-timeout", 0, 0, G_OPTION_ARG_NONE, NULL,
+      "Set the default timeout to T ms", "T" },
+    { "gsnmp-retries", 0, 0, G_OPTION_ARG_NONE, NULL,
+      "Set the default retries to N", "N" },
+    { "gsnmp-version", 0, 0, G_OPTION_ARG_NONE, NULL,
+      "Set the default SNMP version to V", "V" },
+    { NULL },
+};
+
+GOptionGroup *
+gnet_snmp_get_option_group()
+{
+    GOptionGroup *group;
+
+    group = g_option_group_new("gsnmp",
+			       "Gnet SNMP Options:",
+			       "Show Gnet SNMP Options",
+			       NULL, g_free);
+    g_option_group_add_entries(group, gsnmp_args);
+    return group;
 }

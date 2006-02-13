@@ -1,16 +1,12 @@
 /*
  * gsnmp-iftable.c --
  *
- * A simple program to retrieve some data from the interface table.
+ * A simple program to retrieve and display some data from the
+ * standard interface table.
  */
-
-#include <stdlib.h>
-#include <unistd.h>
 
 #include "ianaiftype-mib.h"
 #include "if-mib.h"
-
-static const char *progname = "gsnmp-iftable";
 
 static void
 show_ifentry(if_mib_ifEntry_t *ifEntry)
@@ -47,15 +43,11 @@ show_iftable(GNetSnmp *snmp)
     gchar *s;
 
     s = gnet_uri_get_string(gnet_snmp_get_uri(snmp));
-    g_print("<%s>:\n", s);
+    g_print("Interface table at <%s>:\n", s);
     g_free(s);
 
-#if 0
     if_mib_get_ifTable(snmp, &ifTable, IF_MIB_IFDESCR | IF_MIB_IFTYPE
 		       | IF_MIB_IFADMINSTATUS | IF_MIB_IFOPERSTATUS);
-#else
-    if_mib_get_ifTable(snmp, &ifTable, 0);
-#endif
     if (! snmp->error_status && ifTable) {
 	for (i = 0; ifTable[i]; i++) {
 	    show_ifentry(ifTable[i]);
@@ -68,55 +60,51 @@ show_iftable(GNetSnmp *snmp)
 int
 main(int argc, char **argv)
 {
-    GNetSnmp *snmp;
-    GURI *uri;
-    int c, tflag = 0;
+    gint i, r;
+    static gint repeats = 1;
+    static gboolean dflag = 0;
+    GNetSnmp *s;
+    GError *error = NULL;
+    GOptionContext *context;
 
-    while ((c = getopt(argc, argv, "dt")) >= 0) {
-	switch (c) {
-	case 'd':
-#if 0
-	    gnet_snmp_debug_flags = GNET_SNMP_DEBUG_ALL;
-#else
-	    gnet_snmp_debug_flags = GNET_SNMP_DEBUG_SESSION
-		    | GNET_SNMP_DEBUG_REQUESTS;
-#endif
-	    break;
-	case 't':
-	    tflag = 1;
-	    break;
-	default:
-	    g_printerr("usage: %s [-d] [-t] [snmp-uri ...]\n", progname);
-	    exit(EXIT_FAILURE);
-	}
+    static GOptionEntry entries[] = {
+	{ "repeats", 'r', 0, G_OPTION_ARG_INT, &repeats,
+	  "Executes N times", "N" },
+	{ "debug", 'd', 0, G_OPTION_ARG_NONE, &dflag,
+	  "Generate debug messages", NULL },
+	{ NULL }
+    };
+
+    context = g_option_context_new("uri - display snmp interface info");
+    g_option_context_add_main_entries(context, entries, NULL);
+    g_option_context_add_group (context, gnet_snmp_get_option_group());    
+    if (! g_option_context_parse(context, &argc, &argv, &error)) {
+	g_printerr("%s: %s\n", g_get_prgname(),
+		   (error && error->message) ? error->message
+		   : "option parsing failed");
+	return 1;
     }
 
-    if (! gnet_snmp_init(FALSE)) {
-	exit(1);
+    if (dflag) {
+	gnet_snmp_debug_flags = GNET_SNMP_DEBUG_ALL;
     }
 
-    for (; optind < argc; optind++) {
-	
-	uri = gnet_snmp_parse_uri(argv[optind]);
-	if (! uri) {
-	    g_printerr("%s: invalid snmp uri: %s\n", progname, argv[optind]);
-	    continue;
+    for (i = 1; i < argc; i++) {
+	s = gnet_snmp_new_string(argv[i], &error);
+	if (! s) {
+	    g_printerr("%s: %s\n", g_get_prgname(),
+		       (error && error->message) ? error->message
+		       : "creating SNMP session failed");
+	    return 1;
+	}
+	gnet_snmp_set_version(s, GNET_SNMP_V1);
+
+	for (r = 0; r < repeats; r++) {
+	    show_iftable(s);
 	}
 	
-	snmp = gnet_snmp_new_uri(uri);
-	if (! snmp) {
-	    g_printerr("%s: unable to create session\n", progname);
-	    gnet_uri_delete(uri);
-	    continue;
-	}
-	gnet_snmp_set_version(snmp, GNET_SNMP_V1);
-	
-	show_iftable(snmp);
-	
-	gnet_snmp_delete(snmp);
-	gnet_uri_delete(uri);
+	gnet_snmp_delete(s);
     }
     
     return 0;
 }
-

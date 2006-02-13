@@ -35,10 +35,6 @@ main()
     gint32 param1 = 500;
     const char *uri_string = "snmp://public@localhost/";
 
-    if (! gnet_snmp_init(FALSE)) {
-        exit(1);
-    }
-
     uri = gnet_snmp_parse_uri(uri_string);
     if (! uri) {
 	g_printerr("%s: invalid snmp uri: %s\n", progname, uri_string);

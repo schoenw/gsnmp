@@ -57,8 +57,6 @@ extern		GNetSnmpDebugFlags gnet_snmp_debug_flags;
 #include "dispatch.h"
 #include "utils.h"
 
-gboolean	gnet_snmp_init(gboolean dobind);
-
 G_END_DECLS
 
 #endif /* __GNET_SNMP_H__ */

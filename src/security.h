@@ -26,6 +26,19 @@
 
 #include "gsnmp.h"
 
+typedef enum {
+    GNET_SNMP_SECMODEL_ANY	= 0,
+    GNET_SNMP_SECMODEL_SNMPV1	= 1,
+    GNET_SNMP_SECMODEL_SNMPV2C	= 2,
+    GNET_SNMP_SECMODEL_SNMPV3	= 3
+} GNetSnmpSecModel;
+
+typedef enum {
+    GNET_SNMP_SECLEVEL_NANP	= 0,
+    GNET_SNMP_SECLEVEL_ANP	= 1,
+    GNET_SNMP_SECLEVEL_AP	= 2
+} GNetSnmpSecLevel;
+
 /* Security models as in RFC2271, page 39 */
 
 #define SMODEL_ANY     0

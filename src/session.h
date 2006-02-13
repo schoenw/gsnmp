@@ -46,33 +46,60 @@ typedef void     (*GNetSnmpTimeFunc) (GNetSnmp *snmp,
 /* XXX this structure should be completely private XXX */
 
 struct _GNetSnmp {
-    GNetSnmpTDomain tdomain;
-    GInetAddr      *taddress;
-    GURI	   *uri;
-    gchar          *community;
-    gint32          error_status;
-    guint32	    error_index;
-    guint           retries;		/* number of retries */
-    guint           timeout;		/* timeout in milliseconds */
-    GNetSnmpVersion version;
+    GNetSnmpTDomain  tdomain;
+    GInetAddr       *taddress;
+    GURI	    *uri;
+    gint32           error_status;
+    guint32	     error_index;
+    guint            retries;		/* number of retries */
+    guint            timeout;		/* timeout in milliseconds */
+    GNetSnmpVersion  version;           /* message version */
+    GString	    *ctxt_name;		/* context name */
+    GString	    *sec_name;		/* security name */
+    GNetSnmpSecModel sec_model;		/* security model */
+    GNetSnmpSecLevel sec_level;		/* security level */
     GNetSnmpDoneFunc done_callback;	/* what to call when complete */
     GNetSnmpTimeFunc time_callback;	/* what to call on a timeout */
-    gpointer        magic;              /* additional data for callbacks */
+    gpointer         magic;             /* additional data for callbacks */
 };
 
 #define GNET_SNMP_DEFAULT_RETRIES 3
 #define GNET_SNMP_DEFAULT_TIMEOUT 200
 
+/*
+ * Session error codes. Eventually, all session API functions should
+ * return error information via the GError mechanism...
+ */
+
+typedef enum
+{
+    GNET_SNMP_ERROR_NEWFAIL,
+    GNET_SNMP_ERROR_BADURI
+} GNetSnmpXXError;
+
+#define GNET_SNMP_ERROR gnet_snmp_error_quark()
+
+/*
+ * Session API functions.
+ */
+
 GNetSnmp*	gnet_snmp_new		(void);
 GNetSnmp*	gnet_snmp_new_uri	(const GURI *uri);
+GNetSnmp*	gnet_snmp_new_string	(const gchar *string, GError **error);
 GNetSnmp*	gnet_snmp_clone		(GNetSnmp *snmp);
 void		gnet_snmp_delete	(GNetSnmp *snmp);
 
 void		gnet_snmp_set_transport	(GNetSnmp *snmp,
 					 GNetSnmpTDomain tdomain,
 					 GInetAddr *taddress);
-void		gnet_snmp_set_community	(GNetSnmp *snmp,
-					 gchar *community);
+void		gnet_snmp_set_sec_name	(GNetSnmp *snmp,
+					 GString *name);
+void		gnet_snmp_set_sec_model (GNetSnmp *snmp,
+					 GNetSnmpSecModel model);
+void		gnet_snmp_set_sec_level (GNetSnmp *snmp,
+					 GNetSnmpSecLevel level);
+void		gnet_snmp_set_ctxt_name	(GNetSnmp *snmp,
+					 GString *name);
 void		gnet_snmp_set_timeout	(GNetSnmp *snmp,
 					 guint timeout);
 void		gnet_snmp_set_retries	(GNetSnmp *snmp,
@@ -81,6 +108,10 @@ void		gnet_snmp_set_version	(GNetSnmp *snmp,
 					 GNetSnmpVersion version);
 
 const gchar*	gnet_snmp_get_community	(const GNetSnmp *snmp);
+GString*	gnet_snmp_get_sec_name	(const GNetSnmp *snmp);
+GNetSnmpSecModel gnet_snmp_get_sec_model(const GNetSnmp *snmp);
+GNetSnmpSecLevel gnet_snmp_get_sec_level(const GNetSnmp *snmp);
+GString*	gnet_snmp_get_ctxt_name	(const GNetSnmp *snmp);
 guint		gnet_snmp_get_timeout	(const GNetSnmp *snmp);
 guint		gnet_snmp_get_retries	(const GNetSnmp *snmp);
 GNetSnmpVersion	gnet_snmp_get_version	(const GNetSnmp *snmp);
@@ -150,7 +181,6 @@ typedef struct _GNetSnmpRequest {
     GNetSnmpDoneFunc callback;
     GNetSnmpTimeFunc timeout;
     GNetSnmp        *session;
-    GString         *auth;
     GNetSnmpPdu      pdu;
     struct sockaddr *address;
     GNetSnmpTDomain  tdomain;
@@ -159,6 +189,9 @@ typedef struct _GNetSnmpRequest {
     guint            retries;
     guint            timeoutval;
     GNetSnmpVersion  version;
+    GString         *sec_name;
+    GNetSnmpSecModel sec_model;
+    GNetSnmpSecLevel sec_level;
     gpointer         magic;
 } GNetSnmpRequest;
 
@@ -175,11 +208,6 @@ void		 gnet_snmp_request_timeout(GNetSnmpRequest *request);
  * Session API - the stuff below needs to be cleaned up. XXX
  */
 
-int g_snmp_timeout_cb        (gpointer    data);
-
-void g_session_response_pdu (guint messageProcessingModel,
-  guint securityModel, GString *securityName, guint securityLevel, 
-  GString *contextEngineID, GString *contextName, guint pduVersion,
-  GNetSnmpPdu *PDU);
+void g_session_response_pdu(GNetSnmpMsg *msg);
 
 #endif /* __GNET_SNMP_SESSION_H__ */

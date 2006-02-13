@@ -20,11 +20,28 @@
  * Implementation of a SNMP dispatcher as of RFC2271
  */
 
-#ifndef _G_DISPATCH_H_
-#define _G_DISPATCH_H_
+#ifndef __GNET_SNMP_DISPATCH_H__
+#define __GNET_SNMP_DISPATCH_H__
 
 #include "gsnmp.h"
 
+gboolean gnet_snmp_dispatcher_send_pdu	(GNetSnmpTDomain tDomain,
+					 GInetAddr *tAddress,
+					 GNetSnmpVersion version,
+					 GNetSnmpSecModel sec_model,
+					 GString *sec_name,
+					 GNetSnmpSecLevel sec_level,
+					 GNetSnmpPdu *pdu,
+					 gboolean expect_response,
+					 GError **error);
+
+gboolean gnet_snmp_dispatcher_recv_msg	(GNetSnmpTDomain tDomain,
+					 GInetAddr *tAddress,
+					 guchar *msg,
+					 gsize msg_len,
+					 GError **error);
+
+#if 0
 /* This module defines the API to the SNMP RFC layer. Requests are routed
  * to the appropriate transport (e.g. IPv4 or IPv6 or IPX) by using the
  * message processing compatible with the given PDU version (V1, V2C,
@@ -55,5 +72,6 @@ gboolean g_register_security  (guint model_nr, struct g_security *sec);
 
 #define PDUV1 1
 #define PDUV2 2
+#endif
 
-#endif /* _G_DISPATCH_H_ */
+#endif /* __GNET_SNMP_DISPATCH_H__ */

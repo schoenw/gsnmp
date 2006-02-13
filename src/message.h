@@ -29,27 +29,29 @@
 typedef enum {
     GNET_SNMP_V1    = 0,
     GNET_SNMP_V2C   = 1,
+    GNET_SNMP_V2P   = 2,	/* historic, not supported */
     GNET_SNMP_V3    = 3
 } GNetSnmpVersion;
 
-#if 0
-typedef struct _GNetSnmpMessage GNetSnmpMsg;
+
+typedef struct _GNetSnmpMsg GNetSnmpMsg;
 
 struct _GNetSnmpMsg {
-    gint32 version;		/* SNMPv1 / SNMPv2c / SNMPv3 */
-    guchar *community;		/* SNMPv1 / SNMPv2c */
-    gsize  community_len;	/* SNMPv1 / SNMPv2c */
-    gint32 msgid;		/* SNMPv3 */
-    gint32 msg_max_size;	/* SNMPv3 */
-    guint8 msg_flags;		/* SNMPv3 */
-    gint32 msg_security_model;	/* SNMPv3 */
+    gint32	version;		/** version (RFC 1157, RFC 1901, RFC 3412) */
+    guchar	*community;		/** community (RFC 1157, RFC 1901) */
+    gsize	community_len;		/** community (RFC 1157, RFC 1901) */
+    gint32	msgid;			/** msgID (RFC 3412) */
+    gint32	msg_max_size;		/** msgMaxSize (RFC 3412) */
+    guint8	msg_flags;		/** msgFlags (RFC 3412) */
+    gint32	msg_security_model;	/** msgMaxSize (RFC 3412) */
+    gpointer	data;			/** typically an SNMP PDU */
 };
 
-gboolean gnet_snmp_ber_enc_msg	(GNetSnmpBer *asn1, GNetSnmpMsg *msg,
+gboolean gnet_snmp_ber_enc_msg	(GNetSnmpBer *ber, GNetSnmpMsg *msg,
 				 GError **error);
-gboolean gnet_snmp_ber_dec_msg	(GNetSnmpBer *asn1, GNetSnmpMsg *msg,
+gboolean gnet_snmp_ber_dec_msg	(GNetSnmpBer *ber, GNetSnmpMsg *msg,
 				 GError **error);
-#endif
+
 
 /* Processing Models as in RFC2271, page 40 */
 
@@ -119,4 +121,4 @@ struct g_message
 
 gboolean g_message_init(void);
 
-#endif /* _G_MESSAGE_H_ */
+#endif /* __GNET_SNMP_MSG_H__ */

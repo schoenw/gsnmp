@@ -30,6 +30,19 @@
 #include <time.h>
 
 static GSList  *request_queue = NULL;   /* queue of active requests */
+static int initialized = 0;
+
+static int g_snmp_timeout_cb(gpointer data);
+
+GQuark
+gnet_snmp_error_quark(void)
+{
+    static GQuark quark = 0;
+    if (quark == 0) {
+	quark = g_quark_from_static_string("gnet-snmp-error-quark");
+    }
+    return quark;
+}
 
 /*
  * Allocate a new session data structure.
@@ -40,12 +53,20 @@ gnet_snmp_new()
 {
     GNetSnmp *session;
 
+    if (! initialized) {
+	g_timeout_add(100, g_snmp_timeout_cb, NULL);
+    }
+
     session = g_malloc0(sizeof(GNetSnmp));
     session->tdomain = GNET_SNMP_TDOMAIN_NONE;
     session->taddress = NULL;
     session->retries = GNET_SNMP_DEFAULT_RETRIES;
     session->timeout = GNET_SNMP_DEFAULT_TIMEOUT;
     session->version = GNET_SNMP_V2C;
+    session->sec_level = GNET_SNMP_SECLEVEL_NANP;
+    session->sec_model = GNET_SNMP_SECMODEL_ANY;
+    session->sec_name = g_string_new(NULL);
+    session->ctxt_name = g_string_new(NULL);
 
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_SESSION) {
 	g_printerr("session %p: new\n", session);
@@ -85,13 +106,60 @@ gnet_snmp_new_uri(const GURI *uri)
 	
 	snmp = gnet_snmp_new();
 	if (snmp) {
+	    GString *s = g_string_new(uri->userinfo);
 	    gnet_snmp_set_transport(snmp, tdomain, taddress);
-	    gnet_snmp_set_community(snmp, uri->userinfo);
+	    gnet_snmp_set_sec_name(snmp, s);
+	    g_string_free(s, 1);
+
+	    if (uri->path && uri->path[0] == '/' && uri->path[1]) {
+		char *end = strchr(uri->path+1, '/');
+		GString *s;
+		if (end) {
+		    s = g_string_new_len(uri->path+1, end - uri->path - 1);
+		} else {
+		    s = g_string_new(uri->path+1);
+		}
+		gnet_snmp_set_ctxt_name(snmp, s);
+		g_string_free(s, 1);
+	    }
+	    
 	}
 	gnet_inetaddr_delete(taddress);
     }
 
     return snmp;
+}
+
+GNetSnmp*
+gnet_snmp_new_string(const gchar *string, GError **error)
+{
+    GURI *uri;
+    GNetSnmp *s;
+
+    uri = gnet_snmp_parse_uri(string);
+    if (! uri) {
+	if (error) {
+	    g_set_error(error,
+			GNET_SNMP_ERROR,
+			GNET_SNMP_ERROR_BADURI,
+			"invalid snmp uri");
+	}
+	return NULL;
+    }
+
+    s = gnet_snmp_new_uri(uri);
+    if (! s) {
+	gnet_uri_delete(uri);
+	if (error) {
+	    g_set_error(error,
+			GNET_SNMP_ERROR,
+			GNET_SNMP_ERROR_NEWFAIL,
+			"unable to create snmp session");
+	}
+	return NULL;
+    }
+    gnet_uri_delete(uri);
+    return s;
 }
 
 /*
@@ -107,10 +175,13 @@ gnet_snmp_clone(GNetSnmp *session)
 
     clone = gnet_snmp_new();
     gnet_snmp_set_transport(clone, session->tdomain, session->taddress);
-    gnet_snmp_set_community(clone, session->community);
     gnet_snmp_set_timeout(clone, session->timeout);
     gnet_snmp_set_retries(clone, session->retries);
     gnet_snmp_set_version(clone, session->version);
+    gnet_snmp_set_sec_model(clone, session->sec_model);
+    gnet_snmp_set_sec_level(clone, session->sec_level);
+    gnet_snmp_set_sec_name(clone, session->sec_name);
+    gnet_snmp_set_ctxt_name(clone, session->ctxt_name);
 
     return clone;
 }
@@ -128,7 +199,8 @@ gnet_snmp_delete(GNetSnmp *snmp)
 
     if (snmp->taddress) gnet_inetaddr_delete(snmp->taddress);
     if (snmp->uri) gnet_uri_delete(snmp->uri);
-    if (snmp->community) g_free(snmp->community);
+    if (snmp->sec_name) g_string_free(snmp->sec_name, 1);
+    if (snmp->ctxt_name) g_string_free(snmp->ctxt_name, 1);
     g_free(snmp);
 
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_SESSION) {
@@ -152,23 +224,29 @@ gnet_snmp_set_transport(GNetSnmp *snmp,
     (void) gnet_snmp_get_uri(snmp);
 }
 
+/* decrecated interface */
+
 void
 gnet_snmp_set_community(GNetSnmp *snmp, gchar *community)
 {
+    GString *s;
+    
     g_return_if_fail(snmp);
 
-    if (snmp->community) g_free(snmp->community);
-    snmp->community = NULL;
-    if (community) snmp->community = g_strdup(community);
-    (void) gnet_snmp_get_uri(snmp);
+    s = g_string_new(community);
+    gnet_snmp_set_sec_name(snmp, s);
+    g_string_free(s, 1);
+    (void) gnet_snmp_get_uri(snmp);	/* update the uri */
 }
+
+/* deprecated interface */
 
 const gchar*
 gnet_snmp_get_community(const GNetSnmp *snmp)
 {
     g_return_val_if_fail(snmp, NULL);
 
-    return snmp->community;
+    return snmp->sec_name->str;
 }
 
 void
@@ -219,6 +297,70 @@ gnet_snmp_get_version(const GNetSnmp *snmp)
     return snmp->version;
 }
 
+void
+gnet_snmp_set_sec_name(GNetSnmp *snmp, GString *name)
+{
+    g_return_if_fail(snmp);
+
+    g_string_assign(snmp->sec_name, name->str);
+    (void) gnet_snmp_get_uri(snmp);	/* update the uri */
+}
+
+GString*
+gnet_snmp_get_sec_name(const GNetSnmp *snmp)
+{
+    g_return_val_if_fail(snmp, NULL);
+    
+    return snmp->sec_name;
+}
+
+void
+gnet_snmp_set_sec_model(GNetSnmp *snmp, GNetSnmpSecModel model)
+{
+    g_return_if_fail(snmp);
+
+    snmp->sec_model = model;
+}
+
+GNetSnmpSecModel gnet_snmp_get_sec_model(const GNetSnmp *snmp)
+{
+    g_return_val_if_fail(snmp, 0);
+
+    return snmp->sec_model;
+}
+
+void
+gnet_snmp_set_sec_level(GNetSnmp *snmp, GNetSnmpSecLevel level)
+{
+    g_return_if_fail(snmp);
+
+    snmp->sec_level = level;
+}
+
+GNetSnmpSecLevel gnet_snmp_get_sec_level(const GNetSnmp *snmp)
+{
+    g_return_val_if_fail(snmp, 0);
+
+    return snmp->sec_level;
+}
+
+void
+gnet_snmp_set_ctxt_name(GNetSnmp *snmp, GString *name)
+{
+    g_return_if_fail(snmp);
+
+    g_string_assign(snmp->ctxt_name, name->str);
+    (void) gnet_snmp_get_uri(snmp);	/* update the uri */
+}
+
+GString*
+gnet_snmp_get_ctxt_name(const GNetSnmp *snmp)
+{
+    g_return_val_if_fail(snmp, NULL);
+    
+    return snmp->ctxt_name;
+}
+
 /*
  * Allocate a new request data structure.
  */
@@ -229,7 +371,7 @@ gnet_snmp_request_new()
     GNetSnmpRequest *request;
 
     request = g_malloc0(sizeof(GNetSnmpRequest));
-    request->auth = g_string_new(NULL);
+    request->sec_name = g_string_new(NULL);
     
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_REQUESTS) {
 	g_printerr("request %p: new\n", request);
@@ -247,8 +389,8 @@ gnet_snmp_request_delete(GNetSnmpRequest *request)
 {
     g_return_if_fail(request);
     
-    if (request->auth) {
-	g_string_free(request->auth, 1);
+    if (request->sec_name) {
+	g_string_free(request->sec_name, 1);
     }
     g_free(request);
 
@@ -346,7 +488,6 @@ g_async_send(GNetSnmp *session, GNetSnmpPduType type,
     GError *error = NULL;
     GNetSnmpRequest *request;
     GTimeVal	  now;
-    int           model = 0, pduv = 0;
     static gint32 id = -1;
     
     if (id < 0) {
@@ -355,7 +496,7 @@ g_async_send(GNetSnmp *session, GNetSnmpPduType type,
 
     g_get_current_time(&now);
 
-    session->error_status = GNET_SNMP_ERR_NOERROR;
+    session->error_status = GNET_SNMP_PDU_ERR_NOERROR;
     session->error_index = 0;
     
     request = gnet_snmp_request_new();
@@ -365,7 +506,12 @@ g_async_send(GNetSnmp *session, GNetSnmpPduType type,
     request->pdu.error_status = arg1;
     request->pdu.error_index  = arg2;
     request->pdu.varbind_list = vbl;
-    request->auth = g_string_append(request->auth, session->community);
+    request->pdu.context_name = (guchar *) session->ctxt_name->str;
+    request->pdu.context_name_len = session->ctxt_name->len;
+    request->sec_name         = g_string_append(request->sec_name,
+						session->sec_name->str);
+    request->sec_model	      = session->sec_model;
+    request->sec_level	      = session->sec_level;
     request->pdu.type	      = type;
     request->retries          = session->retries;
     request->timeoutval       = session->timeout;
@@ -378,26 +524,12 @@ g_async_send(GNetSnmp *session, GNetSnmpPduType type,
     request->timer.tv_sec    += request->timeoutval / 1000;
     request->timer.tv_usec   += (request->timeoutval % 1000) * 1000;
 
-    switch (request->version) {
-    case 0: 
-	model = PMODEL_SNMPV1;
-	pduv  = PDUV1;
-	break;
-    case 1: 
-	model = PMODEL_SNMPV2C;
-	pduv  = PDUV2;
-	break;
-    case 3: 
-	model = PMODEL_SNMPV3;
-	pduv  = PDUV2;
-	break;
-    default:
-	g_assert_not_reached();
-    }
-
-    sendPdu(request->tdomain, request->taddress, model, SMODEL_ANY, 
-	    request->auth, SLEVEL_NANP, NULL, NULL, pduv, &request->pdu, TRUE,
-	    &error);
+    gnet_snmp_dispatcher_send_pdu(request->tdomain, request->taddress,
+				  request->version,
+				  request->sec_model,
+				  request->sec_name,
+				  request->sec_level,
+				  &request->pdu, TRUE, &error);
 
     if (error) {
 	gnet_snmp_request_timeout(request);
@@ -466,7 +598,7 @@ cb_time(GNetSnmp *session, void *magic)
     struct syncmagic *sm = (struct syncmagic *) magic;
     sm->result = NULL;
     session->error_index = 0;
-    session->error_status = GNET_SNMP_ERR_NORESPONSE;
+    session->error_status = GNET_SNMP_PDU_ERR_NORESPONSE;
 
     g_main_quit(sm->loop);
 }
@@ -638,13 +770,12 @@ g_snmp_printf(char *buf, int buflen, GSnmpVarBind *obj)
  * The low level callbacks
  */
 
-int
-g_snmp_timeout_cb (gpointer data)
+static int
+g_snmp_timeout_cb(gpointer data)
 {
     GSList *mylist;
     GTimeVal now;
     GNetSnmpRequest *request;
-    int model = 0, pduv = 0;
     
   again:
     g_get_current_time(&now);
@@ -663,34 +794,21 @@ g_snmp_timeout_cb (gpointer data)
 		request->timer.tv_sec  += request->timeoutval / 1000;
 		request->timer.tv_usec += (request->timeoutval % 1000) * 1000;
 		
-		/* 
-		 * Again what happens on a -1 return to sendto
-		 */
-		switch (request->version) {
-		case GNET_SNMP_V1: 
-		    model = PMODEL_SNMPV1;
-		    pduv  = PDUV1;
-		    break;
-		case GNET_SNMP_V2C: 
-		    model = PMODEL_SNMPV2C;
-		    pduv  = PDUV2;
-		    break;
-		case GNET_SNMP_V3: 
-		    model = PMODEL_SNMPV3;
-		    pduv  = PDUV2;
-		    break;
-		}
-
 		if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_REQUESTS) {
 		    g_printerr("request %p: timeout ...\n", request);
 		}
 		
 		{
 		    GError *error = NULL;
-		
-		    sendPdu(request->tdomain, request->taddress, model, SMODEL_ANY, 
-			    request->auth, SLEVEL_NANP, NULL, NULL, pduv, 
-			    &request->pdu, TRUE, &error);
+
+		    gnet_snmp_dispatcher_send_pdu(request->tdomain,
+						  request->taddress,
+						  request->version,
+						  request->sec_model,
+						  request->sec_name,
+						  request->sec_level,
+						  &request->pdu, TRUE, &error);
+
 		    if (error) {
 			g_error_free(error);
 			gnet_snmp_request_timeout(request);
@@ -720,38 +838,39 @@ g_snmp_timeout_cb (gpointer data)
 }
 
 void
-g_session_response_pdu(guint messageProcessingModel,
-		       guint securityModel,
-		       GString *securityName,
-		       guint securityLevel, 
-		       GString *contextEngineID,
-		       GString *contextName,
-		       guint pduVersion,
-		       GNetSnmpPdu *PDU)
+g_session_response_pdu(GNetSnmpMsg *msg)
 {
-    GList       *vbl;
+    GNetSnmpPdu     *pdu;
+    GList           *vbl;
     GNetSnmpRequest *request;
 
-    vbl = PDU->varbind_list;
+    g_assert(msg);
 
-    request = gnet_snmp_request_find(PDU->request_id);
+    if (! msg->data) return;
+
+    pdu = (GNetSnmpPdu *) msg->data;
+    vbl = pdu->varbind_list;
+
+    request = gnet_snmp_request_find(pdu->request_id);
     if (! request) {
 	g_list_foreach(vbl, (GFunc) gnet_snmp_varbind_delete, NULL);
 	g_list_free(vbl);
 	return;
     }
-    
+
+#if 0
     /* XXX this needs to be generalized I think */
     
-    if (memcmp(securityName->str, request->auth->str, securityName->len)) {
+    if (memcmp(securityName->str, request->sec_name->str, securityName->len)) {
 	g_list_foreach(vbl, (GFunc) gnet_snmp_varbind_delete, NULL);
 	g_list_free(vbl);
 	return;
     }
+#endif
 
     gnet_snmp_request_dequeue(request);
-    request->session->error_status = PDU->error_status;
-    request->session->error_index = PDU->error_index;
+    request->session->error_status = pdu->error_status;
+    request->session->error_index = pdu->error_index;
     if (! request->callback) {
 	g_list_foreach(vbl, (GFunc) gnet_snmp_varbind_delete, NULL);
 	g_list_free(vbl);
@@ -759,7 +878,7 @@ g_session_response_pdu(guint messageProcessingModel,
 	return;
     }
 
-    if (request->callback(request->session, PDU, vbl, request->magic)) {
+    if (request->callback(request->session, pdu, vbl, request->magic)) {
 	if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_REQUESTS) {
 	    g_printerr("request %p: callback invoked\n", request);
 	}
@@ -771,7 +890,7 @@ g_session_response_pdu(guint messageProcessingModel,
 GURI*
 gnet_snmp_get_uri(GNetSnmp *snmp)
 {
-    gchar *host, *name = NULL, *context = "";
+    gchar *host, *name, *path = NULL;
     gint port;
     
     g_return_val_if_fail(snmp, NULL);
@@ -780,22 +899,15 @@ gnet_snmp_get_uri(GNetSnmp *snmp)
 
     host = gnet_inetaddr_get_canonical_name(snmp->taddress);
     port = gnet_inetaddr_get_port(snmp->taddress);
-
-    if (snmp->version == GNET_SNMP_V1 || snmp->version == GNET_SNMP_V2C) {
-	if (snmp->community) {
-	    char *p;
-	    name = g_strdup(snmp->community);
-	    p = strchr(name, '@');
-	    if (p) {
-		*p = 0;
-		context = ++p;
-	    }
-	}
+    name = snmp->sec_name ? snmp->sec_name->str : NULL;
+    if (snmp->ctxt_name) {
+	path = g_strdup_printf("/%s/", snmp->ctxt_name->str);
     }
-   
+
     snmp->uri = gnet_uri_new_fields_all("snmp", name, host, port,
-					context, NULL, NULL);
-    g_free(name);
+					path, NULL, NULL);
+
+    if (path) g_free(path);
     
     return snmp->uri;
 }

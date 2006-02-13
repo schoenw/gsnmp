@@ -64,7 +64,7 @@ g_snmp_table_done_callback(GNetSnmp *snmp,
     /* Check whether we reached the end of the MIB view... */
     
     cols = g_list_length(table->orig_objs);
-    if (spdu->error_status == GNET_SNMP_ERR_NOSUCHNAME) {
+    if (spdu->error_status == GNET_SNMP_PDU_ERR_NOSUCHNAME) {
 	if (table->cb_finish) {
 	    table->cb_finish(snmp, table->data);
 	} else {
@@ -196,7 +196,7 @@ g_snmp_table_time_callback(GNetSnmp *snmp, gpointer data)
     }
 
     snmp->error_index = 0;
-    snmp->error_status = GNET_SNMP_ERR_NORESPONSE;
+    snmp->error_status = GNET_SNMP_PDU_ERR_NORESPONSE;
 }
 
 

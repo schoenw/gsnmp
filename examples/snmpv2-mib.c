@@ -358,7 +358,7 @@ snmpv2_mib_get_system(GNetSnmp *s, snmpv2_mib_system_t **system, gint64 mask)
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;
@@ -487,7 +487,7 @@ snmpv2_mib_get_sysOREntry(GNetSnmp *s, snmpv2_mib_sysOREntry_t **sysOREntry, gin
     len = pack_sysOREntry(base, sysORIndex);
     if (len < 0) {
         g_warning("%s: invalid index values", "sysOREntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -499,7 +499,7 @@ snmpv2_mib_get_sysOREntry(GNetSnmp *s, snmpv2_mib_sysOREntry_t **sysOREntry, gin
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;
@@ -575,7 +575,7 @@ snmpv2_mib_get_snmp(GNetSnmp *s, snmpv2_mib_snmp_t **snmp, gint64 mask)
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;
@@ -655,7 +655,7 @@ snmpv2_mib_get_snmpSet(GNetSnmp *s, snmpv2_mib_snmpSet_t **snmpSet, gint64 mask)
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;

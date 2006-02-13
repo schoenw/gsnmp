@@ -136,17 +136,16 @@
 
 /* ******************************* */
 
-/**
- *  gnet_snmp_password_to_key_md5
- *  @password: Password (not necessarily NUL terminated).
- *  @password_len: Length of the password (must be positive).
- *  @key: Pointer to memory large enough to hold the key.
+/** Convert password into a key using MD5.
  *
- *  Convert the password into a key by implementing the algorithm
- *  defined in RFC 3414 appendix A.2.1 using MD5 as the oneway hash
- *  function.
+ * \param password password (not necessarily NUL terminated).
+ * \param password_len length of the password (must be positive).
+ * \param key pointer to memory large enough to hold the key.
  *
- **/
+ * Convert the password into a key by implementing the algorithm
+ * defined in RFC 3414 appendix A.2.1 using MD5 as the oneway hash
+ * function.
+ */
 
 void
 gnet_snmp_password_to_key_md5(guchar *password, gsize password_len,
@@ -174,7 +173,7 @@ gnet_snmp_password_to_key_md5(guchar *password, gsize password_len,
 	    /*************************************************/
 	    *cp++ = password[ password_index++ % password_len ];
         }
-	gnet_md5_update(gmd5, password_buf, 64);
+	gnet_md5_update(gmd5, (gchar *) password_buf, 64);
 	count += 64;
     }
     gnet_md5_final(gmd5);
@@ -183,17 +182,16 @@ gnet_snmp_password_to_key_md5(guchar *password, gsize password_len,
     gnet_md5_delete(gmd5);
 }
 
-/**
- *  gnet_snmp_localize_key_md5
- *  @key: Pointer to memory which holds a key.
- *  @engineID: Pointer to memory which holds an SNMP engine ID.
- *  @engineID_len: Length of the engine ID (between 5 and 32 inclusive).
+/** Localize a key using MD5.
  *
- *  Localize a key for a specific engine by implementing the algorithm
- *  defined in RFC 3414 appendix A.2.1 using MD5 as the oneway hash
- *  function.
+ * \param key pointer to memory which holds a key.
+ * \param engineID pointer to memory which holds an SNMP engine ID.
+ * \param engineID_len length of the engine ID (between 5 and 32 inclusive).
  *
- **/
+ * Localize a key for a specific engine by implementing the algorithm
+ * defined in RFC 3414 appendix A.2.1 using MD5 as the oneway hash
+ * function.
+ */
 
 void
 gnet_snmp_localize_key_md5(guchar *key, guchar *engineID, gsize engineID_len)
@@ -207,22 +205,21 @@ gnet_snmp_localize_key_md5(guchar *key, guchar *engineID, gsize engineID_len)
     g_memmove(password_buf+16, engineID, engineID_len);
     g_memmove(password_buf+16+engineID_len, key, 16);
 
-    gmd5 = gnet_md5_new(password_buf, 32+engineID_len);
+    gmd5 = gnet_md5_new((gchar *) password_buf, 32+engineID_len);
     g_memmove(key, gnet_md5_get_digest(gmd5), GNET_MD5_HASH_LENGTH);
     gnet_md5_delete(gmd5);
 }
 
-/**
- *  gnet_snmp_password_to_key_sha
- *  @password: Password (not necessarily NUL terminated)
- *  @password_len: Length of the password (must be positive)
- *  @key: Pointer to memory large enough to hold the key
+/** Convert password into a key using SHA.
  *
- *  Convert the password into a key by implementing the algorithm
- *  defined in RFC 3414 appendix A.2.1 using SHA as the oneway hash
- *  function.
+ * \param password password (not necessarily NUL terminated)
+ * \param password_len length of the password (must be positive)
+ * \param key pointer to memory large enough to hold the key
  *
- **/
+ * Convert the password into a key by implementing the algorithm
+ * defined in RFC 3414 appendix A.2.1 using SHA as the oneway hash
+ * function.
+ */
 
 void
 gnet_snmp_password_to_key_sha(guchar *password, gsize password_len,
@@ -250,7 +247,7 @@ gnet_snmp_password_to_key_sha(guchar *password, gsize password_len,
 	    /*************************************************/
 	    *cp++ = password[ password_index++ % password_len ];
         }
-	gnet_sha_update(gsha, password_buf, 64);
+	gnet_sha_update(gsha, (gchar *) password_buf, 64);
 	count += 64;
     }
     gnet_sha_final(gsha);
@@ -259,17 +256,16 @@ gnet_snmp_password_to_key_sha(guchar *password, gsize password_len,
     gnet_sha_delete(gsha);
 }
 
-/**
- *  gnet_snmp_localize_key_sha
- *  @key: Pointer to memory which holds a key
- *  @engineID: Pointer to memory which holds an SNMP engine ID
- *  @engineID_len: Length of the engine ID (between 5 and 32 inclusive)
+/** Localize a key using SHA.
  *
- *  Localize a key for a specific engine by implementing the algorithm
- *  defined in RFC 3414 appendix A.2.1 using SHA as the oneway hash
- *  function.
+ * \param key pointer to memory which holds a key
+ * \param engineID pointer to memory which holds an SNMP engine ID
+ * \param engineID_len length of the engine ID (between 5 and 32 inclusive)
  *
- **/
+ * Localize a key for a specific engine by implementing the algorithm
+ * defined in RFC 3414 appendix A.2.1 using SHA as the oneway hash
+ * function.
+ */
 
 void
 gnet_snmp_localize_key_sha(guchar *key, guchar *engineID, gsize engineID_len)
@@ -283,7 +279,7 @@ gnet_snmp_localize_key_sha(guchar *key, guchar *engineID, gsize engineID_len)
     g_memmove(password_buf+20, engineID, engineID_len);
     g_memmove(password_buf+20+engineID_len, key, 20);
 
-    gsha = gnet_sha_new(password_buf, 40+engineID_len);
+    gsha = gnet_sha_new((gchar *) password_buf, 40+engineID_len);
     g_memmove(key, gnet_sha_get_digest(gsha), GNET_SHA_HASH_LENGTH);
     gnet_sha_delete(gsha);
 }

@@ -60,7 +60,7 @@ g_snmp_walk_done_callback(GNetSnmp *snmp,
      * Check whether we got an error or reached the end of the MIB view.
      */
     
-    if (pdu->error_status == GNET_SNMP_ERR_NOSUCHNAME) {
+    if (pdu->error_status == GNET_SNMP_PDU_ERR_NOSUCHNAME) {
 	if (walk->cb_finish) {
 	    walk->cb_finish(snmp, walk->data);
 	} else {
@@ -81,7 +81,7 @@ g_snmp_walk_done_callback(GNetSnmp *snmp,
      * Check whether we got end of mib view exceptions for all varbinds.
      */
 
-    for (elem = objs; elem; elem = elem = g_list_next(elem)) {
+    for (elem = objs; elem; elem = g_list_next(elem)) {
 	GNetSnmpVarBind *vb = (GNetSnmpVarBind *) elem->data;
 	if (vb->type == GNET_SNMP_VARBIND_TYPE_ENDOFMIBVIEW) {
 	    endofviews++;
@@ -174,7 +174,7 @@ g_snmp_walk_time_callback(GNetSnmp *snmp, gpointer data)
     }
 
     snmp->error_index = 0;
-    snmp->error_status = GNET_SNMP_ERR_NORESPONSE;
+    snmp->error_status = GNET_SNMP_PDU_ERR_NORESPONSE;
 }
 
 

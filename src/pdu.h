@@ -74,13 +74,13 @@ GNetSnmpVarBind* gnet_snmp_varbind_new	(const guint32 *oid,
 					 const gsize value_len);
 void     gnet_snmp_varbind_delete	(GNetSnmpVarBind *vb);
 
-gboolean gnet_snmp_ber_enc_varbind	(GNetSnmpBer *asn1,
+gboolean gnet_snmp_ber_enc_varbind	(GNetSnmpBer *ber,
 					 GNetSnmpVarBind *vb,
 					 GError **error);
-gboolean gnet_snmp_ber_enc_varbind_null	(GNetSnmpBer *asn1,
+gboolean gnet_snmp_ber_enc_varbind_null	(GNetSnmpBer *ber,
 					 GNetSnmpVarBind *vb,
 					 GError **error);
-gboolean gnet_snmp_ber_dec_varbind	(GNetSnmpBer *asn1,
+gboolean gnet_snmp_ber_dec_varbind	(GNetSnmpBer *ber,
 					 GNetSnmpVarBind **vb,
 					 GError **error);
 
@@ -90,15 +90,15 @@ gboolean gnet_snmp_ber_dec_varbind	(GNetSnmpBer *asn1,
  * and navigate SNMP VarBindLists.
  */
 
-gboolean gnet_snmp_ber_enc_varbind_list	(GNetSnmpBer *asn1,
+gboolean gnet_snmp_ber_enc_varbind_list	(GNetSnmpBer *ber,
 					 GList *list,
 					 GError **error);
 
-gboolean gnet_snmp_ber_enc_varbind_list_null(GNetSnmpBer *asn1,
+gboolean gnet_snmp_ber_enc_varbind_list_null(GNetSnmpBer *ber,
 					     GList *list,
 					     GError **error);
 
-gboolean gnet_snmp_ber_dec_varbind_list	(GNetSnmpBer *asn1,
+gboolean gnet_snmp_ber_dec_varbind_list	(GNetSnmpBer *ber,
 					 GList **list,
 					 GError **error);
 
@@ -140,30 +140,30 @@ typedef enum {
  */
 
 typedef enum {
-    GNET_SNMP_ERR_DONE		        = -4,
-    GNET_SNMP_ERR_PROCEDURE		= -3,
-    GNET_SNMP_ERR_INTERNAL		= -2,
-    GNET_SNMP_ERR_NORESPONSE		= -1,
-    GNET_SNMP_ERR_NOERROR		= 0,
-    GNET_SNMP_ERR_TOOBIG                = 1,
-    GNET_SNMP_ERR_NOSUCHNAME            = 2,
-    GNET_SNMP_ERR_BADVALUE              = 3,
-    GNET_SNMP_ERR_READONLY              = 4,
-    GNET_SNMP_ERR_GENERROR              = 5,
-    GNET_SNMP_ERR_NOACCESS              = 6,
-    GNET_SNMP_ERR_WRONGTYPE             = 7,
-    GNET_SNMP_ERR_WRONGLENGTH           = 8,
-    GNET_SNMP_ERR_WRONGENCODING         = 9,
-    GNET_SNMP_ERR_WRONGVALUE            = 10,
-    GNET_SNMP_ERR_NOCREATION            = 11,
-    GNET_SNMP_ERR_INCONSISTENTVALUE     = 12,
-    GNET_SNMP_ERR_RESOURCEUNAVAILABLE   = 13,
-    GNET_SNMP_ERR_COMMITFAILED          = 14,
-    GNET_SNMP_ERR_UNDOFAILED            = 15,
-    GNET_SNMP_ERR_AUTHORIZATIONERROR    = 16,
-    GNET_SNMP_ERR_NOTWRITABLE           = 17,
-    GNET_SNMP_ERR_INCONSISTENTNAME      = 18
-} GNetSnmpError;
+    GNET_SNMP_PDU_ERR_DONE		    = -4,
+    GNET_SNMP_PDU_ERR_PROCEDURE		    = -3,
+    GNET_SNMP_PDU_ERR_INTERNAL		    = -2,
+    GNET_SNMP_PDU_ERR_NORESPONSE	    = -1,
+    GNET_SNMP_PDU_ERR_NOERROR		    = 0,
+    GNET_SNMP_PDU_ERR_TOOBIG                = 1,
+    GNET_SNMP_PDU_ERR_NOSUCHNAME            = 2,
+    GNET_SNMP_PDU_ERR_BADVALUE              = 3,
+    GNET_SNMP_PDU_ERR_READONLY              = 4,
+    GNET_SNMP_PDU_ERR_GENERROR              = 5,
+    GNET_SNMP_PDU_ERR_NOACCESS              = 6,
+    GNET_SNMP_PDU_ERR_WRONGTYPE             = 7,
+    GNET_SNMP_PDU_ERR_WRONGLENGTH           = 8,
+    GNET_SNMP_PDU_ERR_WRONGENCODING         = 9,
+    GNET_SNMP_PDU_ERR_WRONGVALUE            = 10,
+    GNET_SNMP_PDU_ERR_NOCREATION            = 11,
+    GNET_SNMP_PDU_ERR_INCONSISTENTVALUE     = 12,
+    GNET_SNMP_PDU_ERR_RESOURCEUNAVAILABLE   = 13,
+    GNET_SNMP_PDU_ERR_COMMITFAILED          = 14,
+    GNET_SNMP_PDU_ERR_UNDOFAILED            = 15,
+    GNET_SNMP_PDU_ERR_AUTHORIZATIONERROR    = 16,
+    GNET_SNMP_PDU_ERR_NOTWRITABLE           = 17,
+    GNET_SNMP_PDU_ERR_INCONSISTENTNAME      = 18
+} GNetSnmpPduError;
 
 /*
  * SNMPv1 trap PDUs have a slightly different format. This library
@@ -182,7 +182,7 @@ struct _GNetSnmpPdu {
     gsize           context_name_len;
     GNetSnmpPduType type;
     gint32          request_id;
-    gint32          error_status;	/* should be GNetSnmpError */
+    gint32          error_status;	/* holds a GNetSnmpError */
     gint32          error_index;
     GList          *varbind_list;
 };
@@ -192,26 +192,17 @@ struct _GNetSnmpPdu {
  * protocol versions supported by this library.
  */
 
-gboolean gnet_snmp_ber_enc_standard_pdu	(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
+gboolean gnet_snmp_ber_enc_pdu_v1	(GNetSnmpBer *ber, GNetSnmpPdu *pdu,
 					 GError **error);
-gboolean gnet_snmp_ber_dec_standard_pdu	(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
+gboolean gnet_snmp_ber_dec_pdu_v1	(GNetSnmpBer *ber, GNetSnmpPdu *pdu,
 					 GError **error);
-gboolean gnet_snmp_ber_enc_trap_pdu	(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
+gboolean gnet_snmp_ber_enc_pdu_v2	(GNetSnmpBer *ber, GNetSnmpPdu *pdu,
 					 GError **error);
-gboolean gnet_snmp_ber_dec_trap_pdu	(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
+gboolean gnet_snmp_ber_dec_pdu_v2	(GNetSnmpBer *ber, GNetSnmpPdu *pdu,
 					 GError **error);
-
-gboolean gnet_snmp_ber_enc_pdu_v1	(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
+gboolean gnet_snmp_ber_enc_pdu_v3	(GNetSnmpBer *ber, GNetSnmpPdu *pdu,
 					 GError **error);
-gboolean gnet_snmp_ber_dec_pdu_v1	(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
-					 GError **error);
-gboolean gnet_snmp_ber_enc_pdu_v2	(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
-					 GError **error);
-gboolean gnet_snmp_ber_dec_pdu_v2	(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
-					 GError **error);
-gboolean gnet_snmp_ber_enc_pdu_v3	(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
-					 GError **error);
-gboolean gnet_snmp_ber_dec_pdu_v3	(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
+gboolean gnet_snmp_ber_dec_pdu_v3	(GNetSnmpBer *ber, GNetSnmpPdu *pdu,
 					 GError **error);
 
 /* ------------------------ stuff we should get rid off ----------------- */

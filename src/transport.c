@@ -53,7 +53,7 @@ gnet_snmp_transport_error_quark(void)
  */
 
 static void
-dump_packet(guchar *data, guint len)
+dump_packet(guchar *data, gsize len)
 {
     guint i;
     g_printerr("packet  %p: ", data);
@@ -99,30 +99,30 @@ tcp_ipv4_receive_message()
 	return;
     }
 
-    if (g_io_channel_read(channel, buffer, sizeof(buffer), &len)) {
+    if (g_io_channel_read(channel, (gchar *) buffer, sizeof(buffer), &len)) {
         return;
     }
 
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_TRANSPORT) {
-	g_printerr("transp. tcp/ipv4: received %d bytes from %s:%d\n", len,
+	g_printerr("transp. tcp/ipv4: received %d bytes from %s:%d\n",
+		   (gint) len,
 		   gnet_inetaddr_get_name(addr),
 		   gnet_inetaddr_get_port(addr));
     }
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_PACKET) {
 	dump_packet(buffer, len);
     }
-    g_receive_message(GNET_SNMP_TDOMAIN_TCP_IPV4, addr, buffer, len);
+    gnet_snmp_dispatcher_recv_msg(GNET_SNMP_TDOMAIN_TCP_IPV4, addr,
+				  buffer, len, NULL);
     gnet_inetaddr_delete(addr);
 }
 
 static gboolean
 tcp_ipv4_send_message(GInetAddr *taddress,
-		      guchar *outgoingMessage,
-		      guint outgoingMessageLength,
-		      GError **error)
+		      guchar *msg, gsize msg_len, GError **error)
 {
     GIOChannel *channel;
-    guint len;
+    gsize len;
     
     if (! tcp_ipv4_socket
 	|| ! gnet_inetaddr_equal(taddress, gnet_tcp_socket_get_remote_inetaddr(tcp_ipv4_socket))) {
@@ -153,19 +153,19 @@ tcp_ipv4_send_message(GInetAddr *taddress,
     }
     
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_TRANSPORT) {
-	g_printerr("transp. tcp/ipv4: send %d bytes to %s:%d\n", len,
+	g_printerr("transp. tcp/ipv4: send %d bytes to %s:%d\n",
+		   (gint) len,
 		   gnet_inetaddr_get_name(taddress),
 		   gnet_inetaddr_get_port(taddress));
     }
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_PACKET) {
-	dump_packet(outgoingMessage, outgoingMessageLength);
+	dump_packet(msg, msg_len);
     }
     
     g_io_add_watch(channel, (G_IO_IN | G_IO_PRI),
 		   gaga, tcp_ipv4_receive_message);
-    if (G_IO_ERROR_NONE != gnet_io_channel_writen(channel, outgoingMessage,
-						  outgoingMessageLength,
-						  &len)) {
+    if (G_IO_ERROR_NONE != gnet_io_channel_writen(channel, msg,
+						  msg_len, &len)) {
 	if (error) {
 	    g_set_error(error,
 			GNET_SNMP_TRANSPORT_ERROR,
@@ -188,18 +188,16 @@ tcp_ipv4_init(gboolean dobind)		/* xxx dobind is not used */
 
 static gboolean
 udp_ipv4_send_message(GInetAddr *taddress,
-		      guchar *outgoingMessage,
-		      guint outgoingMessageLength,
-		      GError **error)
+		      guchar *msg, gsize msg_len, GError **error)
 {
     gint rv;
 
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_PACKET) {
-	dump_packet(outgoingMessage, outgoingMessageLength);
+	dump_packet(msg, msg_len);
     }
 
-    rv = gnet_udp_socket_send(udp_ipv4_socket, outgoingMessage,
-			      outgoingMessageLength, taddress);
+    rv = gnet_udp_socket_send(udp_ipv4_socket, (gchar *) msg,
+			      msg_len, taddress);
     if (rv) {
 	if (error) {
 	    g_set_error(error,
@@ -212,7 +210,7 @@ udp_ipv4_send_message(GInetAddr *taddress,
     
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_TRANSPORT) {
 	g_printerr("transp. udp/ipv4: send %d bytes to %s:%d\n",
-		   outgoingMessageLength,
+		   (gint) msg_len,
 		   gnet_inetaddr_get_name(taddress),
 		   gnet_inetaddr_get_port(taddress));
     }
@@ -226,7 +224,7 @@ udp_ipv4_receive_message(GError **error)
     GInetAddr* addr;
     int len;
 
-    len = gnet_udp_socket_receive(udp_ipv4_socket, buffer, sizeof(buffer), &addr);
+    len = gnet_udp_socket_receive(udp_ipv4_socket, (gchar *) buffer, sizeof(buffer), &addr);
     if (! len) {
 	if (error) {
 	    g_set_error(error,
@@ -245,7 +243,8 @@ udp_ipv4_receive_message(GError **error)
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_PACKET) {
 	dump_packet(buffer, len);
     }
-    g_receive_message(GNET_SNMP_TDOMAIN_UDP_IPV4, addr, buffer, len);
+    gnet_snmp_dispatcher_recv_msg(GNET_SNMP_TDOMAIN_UDP_IPV4, addr,
+				  buffer, len, NULL);
     gnet_inetaddr_delete(addr);
 }
 
@@ -273,18 +272,16 @@ upd_ipv4_init(gboolean dobind)		/* xxx dobind is not used */
 
 static gboolean
 udp_ipv6_send_message(GInetAddr *taddress,
-		      guchar *outgoingMessage,
-		      guint outgoingMessageLength,
-		      GError **error)
+		      guchar *msg, gsize msg_len, GError **error)
 {
     gint rv;
 
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_PACKET) {
-	dump_packet(outgoingMessage, outgoingMessageLength);
+	dump_packet(msg, msg_len);
     }
 
-    rv = gnet_udp_socket_send(udp_ipv6_socket, outgoingMessage,
-			      outgoingMessageLength, taddress);
+    rv = gnet_udp_socket_send(udp_ipv6_socket, (gchar *) msg,
+			      msg_len, taddress);
     if (rv) {
 	if (error) {
 	    g_set_error(error,
@@ -297,7 +294,7 @@ udp_ipv6_send_message(GInetAddr *taddress,
     
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_TRANSPORT) {
 	g_printerr("transp. udp/ipv6: send %d bytes to %s:%d\n",
-		   outgoingMessageLength,
+		   (gint) msg_len,
 		   gnet_inetaddr_get_name(taddress),
 		   gnet_inetaddr_get_port(taddress));
     }
@@ -311,7 +308,7 @@ udp_ipv6_receive_message(GError **error)
     GInetAddr* addr;
     int len;
 
-    len = gnet_udp_socket_receive(udp_ipv6_socket, buffer, sizeof(buffer), &addr);
+    len = gnet_udp_socket_receive(udp_ipv6_socket, (gchar *) buffer, sizeof(buffer), &addr);
     if (! len) {
 	if (error) {
 	    g_set_error(error,
@@ -330,7 +327,8 @@ udp_ipv6_receive_message(GError **error)
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_PACKET) {
 	dump_packet(buffer, len);
     }
-    g_receive_message(GNET_SNMP_TDOMAIN_UDP_IPV6, addr, buffer, len);
+    gnet_snmp_dispatcher_recv_msg(GNET_SNMP_TDOMAIN_UDP_IPV6, addr,
+				  buffer, len, NULL);
     gnet_inetaddr_delete(addr);
 }
 

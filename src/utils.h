@@ -24,6 +24,13 @@
 #define __GNET_SNMP_UTILS_H__
 
 /*
+ * Return the gsnmp specific command line option group to be used with
+ * the glib command line option parser.
+ */
+
+GOptionGroup *gnet_snmp_get_option_group ();
+
+/*
  * Lexicographically compare two object identifiers oid1 and oid2 with
  * length len1 and len2 and return -1, 0 or 1 if oid1 is found to be
  * less than, to match or be greater than oid2.
@@ -38,6 +45,42 @@ gint	gnet_snmp_compare_oids	(guint32 *oid1, gsize len1,
  */
 
 GURI*	gnet_snmp_parse_uri	(const gchar *string);
+
+/*
+ * Parse the query contained in 2nd element of a path of the snmp: URI
+ * scheme. The path passed to this function is the full path of the
+ * URI.
+ */
+
+typedef enum
+{
+    GNET_SNMP_URI_ERROR_NOOIDS,
+    GNET_SNMP_URI_ERROR_TRAIL,
+    GNET_SNMP_URI_ERROR_LPAREN,
+    GNET_SNMP_URI_ERROR_RPAREN,
+    GNET_SNMP_URI_ERROR_COMMA,
+    GNET_SNMP_URI_ERROR_INT,
+    GNET_SNMP_URI_ERROR_DOT,
+    GNET_SNMP_URI_ERROR_STAR,
+    GNET_SNMP_URI_ERROR_PLUS,
+    GNET_SNMP_URI_ERROR_TOKEN,
+    GNET_SNMP_URI_ERROR_EOF
+} GNetSnmpUriError;
+
+#define GNET_SNMP_URI_ERROR gnet_snmp_uri_error_quark()
+
+GQuark	 gnet_snmp_uri_error_quark();
+
+typedef enum
+{
+    GNET_SNMP_URI_GET,
+    GNET_SNMP_URI_NEXT,
+    GNET_SNMP_URI_WALK
+} GNetSnmpUriType;
+
+gboolean gnet_snmp_parse_path	(const gchar *path, GList **vbl,
+				 GNetSnmpUriType *type,
+				 GError **error);
 
 /*
  * The following types and the associated functions are used to

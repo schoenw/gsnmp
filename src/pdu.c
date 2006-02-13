@@ -174,12 +174,17 @@ varbind_new(const guint32 *oid, const gsize oid_len,
     return vb;
 }
 
-/**
- * gnet_snmp_varbind_new:
+/** Allocate and initialize a new #GNetSnmpVarBind.
  *
- * Allocate and initialize a new GNetSnmpVarBind.
+ * \param oid object identifier of the varbind
+ * \param oid_len length of the object identifier (number of subids)
+ * \param type type of the value
+ * \param value value of the varbind (consistent with the type)
+ * \param value_len length of the value
  *
- * Returns: a pointer to a new GNetSnmpVarBind.
+ * Allocate and initialize a new #GNetSnmpVarBind.
+ *
+ * \return a pointer to a new #GNetSnmpVarBind.
  */
 
 GNetSnmpVarBind*
@@ -190,9 +195,9 @@ gnet_snmp_varbind_new(const guint32 *oid, const gsize oid_len,
     return varbind_new(oid, oid_len, type, value, value_len, 0);
 }
 
-/**
- * gnet_snmp_varbind_delete:
- * @vb: the pointer to the #GNetSnmpVarBind to free
+/** Deallocate a #GNetSnmpVarBind.
+ *
+ * \param vb the pointer to the #GNetSnmpVarBind to free
  *
  * Deallocate a GNetSnmpVarBind by freeing all associated memory.
  */
@@ -218,34 +223,34 @@ gnet_snmp_varbind_delete(GNetSnmpVarBind *vb)
     }
 }
 
-/**
- * gnet_snmp_ber_enc_varbind:
- * @asn1: the handle for the #GNetSnmpBer buffer.
- * @vb: the pointer to the #GNetSnmpVarBind to encode
- * @error: the error object used to report errors.
+/** Encode an SNMP varbind as an ASN.1 SEQUENCE.
  *
- * Encodes an SNMP varbind as an ASN.1 SEQUENCE.
+ * \param ber the handle for the #GNetSnmpBer buffer.
+ * \param vb the pointer to the #GNetSnmpVarBind to encode
+ * \param error the error object used to report errors.
  *
- * Returns: a gboolean value indicating success.
+ * Encode an SNMP varbind as an ASN.1 SEQUENCE.
+ *
+ * \return a gboolean value indicating success.
  */
 
 gboolean 
-gnet_snmp_ber_enc_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind *vb,
+gnet_snmp_ber_enc_varbind(GNetSnmpBer *ber, GNetSnmpVarBind *vb,
 			  GError **error)
 {
     guint   cls, tag;
     guchar *eoc, *end;
 
-    if (!gnet_snmp_ber_enc_eoc(asn1, &eoc, error))
+    if (!gnet_snmp_ber_enc_eoc(ber, &eoc, error))
         return FALSE;
     switch (vb->type) {
     case GNET_SNMP_VARBIND_TYPE_INTEGER32:
-	if (!gnet_snmp_ber_enc_gint32(asn1, &end, vb->value.i32, error))
+	if (!gnet_snmp_ber_enc_gint32(ber, &end, vb->value.i32, error))
 	    return FALSE;
 	break;
     case GNET_SNMP_VARBIND_TYPE_OCTETSTRING:
     case GNET_SNMP_VARBIND_TYPE_OPAQUE:
-	if (!gnet_snmp_ber_enc_octets(asn1, &end, vb->value.ui8v, 
+	if (!gnet_snmp_ber_enc_octets(ber, &end, vb->value.ui8v, 
 				      vb->value_len, error))
 	    return FALSE;
 	break;
@@ -253,27 +258,27 @@ gnet_snmp_ber_enc_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind *vb,
     case GNET_SNMP_VARBIND_TYPE_NOSUCHOBJECT:
     case GNET_SNMP_VARBIND_TYPE_NOSUCHINSTANCE:
     case GNET_SNMP_VARBIND_TYPE_ENDOFMIBVIEW:
-	if (!gnet_snmp_ber_enc_null(asn1, &end, error))
+	if (!gnet_snmp_ber_enc_null(ber, &end, error))
 	    return FALSE;
 	break;
     case GNET_SNMP_VARBIND_TYPE_OBJECTID:
-	if (!gnet_snmp_ber_enc_oid(asn1, &end, vb->value.ui32v,
+	if (!gnet_snmp_ber_enc_oid(ber, &end, vb->value.ui32v,
 				   vb->value_len, error))
 	    return FALSE;
 	break;
     case GNET_SNMP_VARBIND_TYPE_IPADDRESS:
-	if (!gnet_snmp_ber_enc_octets(asn1, &end, vb->value.ui8v, 
+	if (!gnet_snmp_ber_enc_octets(ber, &end, vb->value.ui8v, 
 				      vb->value_len, error))
 	    return FALSE;
 	break;
     case GNET_SNMP_VARBIND_TYPE_COUNTER32:
     case GNET_SNMP_VARBIND_TYPE_UNSIGNED32:
     case GNET_SNMP_VARBIND_TYPE_TIMETICKS:
-	if (!gnet_snmp_ber_enc_guint32(asn1, &end, vb->value.ui32, error))
+	if (!gnet_snmp_ber_enc_guint32(ber, &end, vb->value.ui32, error))
 	    return FALSE;
 	break;
     case GNET_SNMP_VARBIND_TYPE_COUNTER64:
-	if (!gnet_snmp_ber_enc_guint64(asn1, &end, vb->value.ui64, error))
+	if (!gnet_snmp_ber_enc_guint64(ber, &end, vb->value.ui64, error))
 	    return FALSE;
 	break;
     default:
@@ -288,37 +293,37 @@ gnet_snmp_ber_enc_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind *vb,
 
     g_assert(type_to_tag_and_class(&tag, &cls, vb->type));
     
-    if (!gnet_snmp_ber_enc_header(asn1, end, cls, GNET_SNMP_ASN1_PRI, tag,
+    if (!gnet_snmp_ber_enc_header(ber, end, cls, GNET_SNMP_ASN1_PRI, tag,
 				  error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_oid(asn1, &end, vb->oid, vb->oid_len, error))
+    if (!gnet_snmp_ber_enc_oid(ber, &end, vb->oid, vb->oid_len, error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_header(asn1, end, GNET_SNMP_ASN1_UNI,
+    if (!gnet_snmp_ber_enc_header(ber, end, GNET_SNMP_ASN1_UNI,
 				  GNET_SNMP_ASN1_PRI, GNET_SNMP_ASN1_OJI,
 				  error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_header(asn1, eoc, GNET_SNMP_ASN1_UNI,
+    if (!gnet_snmp_ber_enc_header(ber, eoc, GNET_SNMP_ASN1_UNI,
 				  GNET_SNMP_ASN1_CON, GNET_SNMP_ASN1_SEQ,
 				  error))
         return FALSE;
     return TRUE;
 }
 
-/**
- * gnet_snmp_ber_enc_varbind_null:
- * @asn1: the handle for the #GNetSnmpBer buffer.
- * @vb: the pointer to the #GNetSnmpVarBind to encode
- * @error: the error object used to report errors.
+/** Encode an SNMP varbind setting the value to an ASN.1 NULL value.
+ *
+ * \param ber the handle for the #GNetSnmpBer buffer.
+ * \param vb the pointer to the #GNetSnmpVarBind to encode
+ * \param error the error object used to report errors.
  *
  * Encodes an SNMP varbind as an ASN.1 SEQUENCE. This function always
  * encodes an ASN.1 NULL value, regardless what the varbind actually
  * contains.
  *
- * Returns: a gboolean value indicating success.
+ * \return a gboolean value indicating success.
  */
 
-gboolean 
-gnet_snmp_ber_enc_varbind_null(GNetSnmpBer *asn1, GNetSnmpVarBind *vb,
+gboolean
+gnet_snmp_ber_enc_varbind_null(GNetSnmpBer *ber, GNetSnmpVarBind *vb,
 			       GError **error)
 {
     GNetSnmpVarBindType t;
@@ -326,24 +331,24 @@ gnet_snmp_ber_enc_varbind_null(GNetSnmpBer *asn1, GNetSnmpVarBind *vb,
 
     t = vb->type;
     vb->type = GNET_SNMP_VARBIND_TYPE_NULL;
-    b = gnet_snmp_ber_enc_varbind(asn1, vb, error);
+    b = gnet_snmp_ber_enc_varbind(ber, vb, error);
     vb->type = t;
     return b;
 }
 
-/**
- * gnet_snmp_ber_dec_varbind:
- * @asn1: the handle for the #GNetSnmpBer buffer.
- * @vb: the pointer used to store the new #GNetSnmpVarBind.
- * @error: the error object used to report errors.
+/** Decodes an SNMP varbind.
+ *
+ * \param ber the handle for the #GNetSnmpBer buffer.
+ * \param vb the pointer used to store the new #GNetSnmpVarBind.
+ * \param error the error object used to report errors.
  *
  * Decodes an SNMP varbind from an ASN.1 SEQUENCE.
  *
- * Returns: a gboolean value indicating success.
+ * \return a gboolean value indicating success.
  */
 
 gboolean 
-gnet_snmp_ber_dec_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind **vb,
+gnet_snmp_ber_dec_varbind(GNetSnmpBer *ber, GNetSnmpVarBind **vb,
 			  GError **error)
 {
     guint cls, con, tag;
@@ -361,7 +366,7 @@ gnet_snmp_ber_dec_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind **vb,
     g_assert(vb);
 
     *vb = NULL;
-    if (!gnet_snmp_ber_dec_header(asn1, &eoc, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &eoc, &cls, &con, &tag, error))
 	return FALSE;
     if (cls != GNET_SNMP_ASN1_UNI
 	|| con != GNET_SNMP_ASN1_CON
@@ -374,7 +379,7 @@ gnet_snmp_ber_dec_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind **vb,
 	}
 	return FALSE;
     }
-    if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error))
 	return FALSE;
     if (cls != GNET_SNMP_ASN1_UNI
 	|| con != GNET_SNMP_ASN1_PRI
@@ -387,9 +392,9 @@ gnet_snmp_ber_dec_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind **vb,
 	}
 	return FALSE;
     }
-    if (!gnet_snmp_ber_dec_oid(asn1, end, &id, &idlen, error))
+    if (!gnet_snmp_ber_dec_oid(ber, end, &id, &idlen, error))
 	return FALSE;
-    if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error)) {
+    if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error)) {
 	g_free(id);
 	return FALSE;
     }
@@ -407,7 +412,7 @@ gnet_snmp_ber_dec_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind **vb,
 
     switch (type) {
     case GNET_SNMP_VARBIND_TYPE_INTEGER32:
-        if (!gnet_snmp_ber_dec_gint32(asn1, end, &l, error)) {
+        if (!gnet_snmp_ber_dec_gint32(ber, end, &l, error)) {
             g_free(id);
             return FALSE;
 	}
@@ -415,7 +420,7 @@ gnet_snmp_ber_dec_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind **vb,
         break;
     case GNET_SNMP_VARBIND_TYPE_OCTETSTRING:
     case GNET_SNMP_VARBIND_TYPE_OPAQUE:
-        if (!gnet_snmp_ber_dec_octets(asn1, end, &p, &len, error)) {
+        if (!gnet_snmp_ber_dec_octets(ber, end, &p, &len, error)) {
             g_free(id);
             return FALSE;
 	}
@@ -426,13 +431,13 @@ gnet_snmp_ber_dec_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind **vb,
     case GNET_SNMP_VARBIND_TYPE_NOSUCHOBJECT:
     case GNET_SNMP_VARBIND_TYPE_NOSUCHINSTANCE:
     case GNET_SNMP_VARBIND_TYPE_ENDOFMIBVIEW:
-        if (!gnet_snmp_ber_dec_null(asn1, end, error)) {
+        if (!gnet_snmp_ber_dec_null(ber, end, error)) {
             g_free(id);
             return FALSE;
 	}
         break;
     case GNET_SNMP_VARBIND_TYPE_OBJECTID:
-        if (!gnet_snmp_ber_dec_oid(asn1, end, (guint32 **)&lp, &len, error)) {
+        if (!gnet_snmp_ber_dec_oid(ber, end, (guint32 **)&lp, &len, error)) {
             g_free(id);
             return FALSE;
 	}
@@ -440,7 +445,7 @@ gnet_snmp_ber_dec_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind **vb,
 	value_len = len;
         break;
     case GNET_SNMP_VARBIND_TYPE_IPADDRESS:
-        if (!gnet_snmp_ber_dec_octets(asn1, end, &p, &len, error)) {
+        if (!gnet_snmp_ber_dec_octets(ber, end, &p, &len, error)) {
             g_free(id);
             return FALSE;
 	}
@@ -461,14 +466,14 @@ gnet_snmp_ber_dec_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind **vb,
     case GNET_SNMP_VARBIND_TYPE_COUNTER32:
     case GNET_SNMP_VARBIND_TYPE_UNSIGNED32:
     case GNET_SNMP_VARBIND_TYPE_TIMETICKS:
-        if (!gnet_snmp_ber_dec_guint32(asn1, end, &ul, error)) {
+        if (!gnet_snmp_ber_dec_guint32(ber, end, &ul, error)) {
 	    g_free(id);
             return FALSE;
 	}
 	value = &ul;
         break;
     case GNET_SNMP_VARBIND_TYPE_COUNTER64:
-	if (!gnet_snmp_ber_dec_guint64(asn1, end, &ull, error)) {
+	if (!gnet_snmp_ber_dec_guint64(ber, end, &ull, error)) {
 	    g_free(id);
 	    return FALSE;
 	}
@@ -478,7 +483,7 @@ gnet_snmp_ber_dec_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind **vb,
 	g_assert_not_reached();
     }
     
-    if (!gnet_snmp_ber_dec_eoc(asn1, eoc, error)) {
+    if (!gnet_snmp_ber_dec_eoc(ber, eoc, error)) {
         g_free(id);
 	return FALSE;
     }
@@ -489,7 +494,7 @@ gnet_snmp_ber_dec_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind **vb,
 
 /**
  * gnet_snmp_ber_enc_varbind_list:
- * @asn1: the handle for the #GNetSnmpBer buffer.
+ * @ber: the handle for the #GNetSnmpBer buffer.
  * @vbl: the list of #GNetSnmpVarBind to encode
  * @error: the error object used to report errors.
  *
@@ -499,21 +504,21 @@ gnet_snmp_ber_dec_varbind(GNetSnmpBer *asn1, GNetSnmpVarBind **vb,
  */
 
 gboolean 
-gnet_snmp_ber_enc_varbind_list(GNetSnmpBer *asn1, GList *vbl, GError **error)
+gnet_snmp_ber_enc_varbind_list(GNetSnmpBer *ber, GList *vbl, GError **error)
 {
     guchar *eoc;
     GList *elem;
 
-    if (!gnet_snmp_ber_enc_eoc(asn1, &eoc, error))
+    if (!gnet_snmp_ber_enc_eoc(ber, &eoc, error))
         return FALSE;
 
     for (elem = g_list_last(vbl); elem; elem = g_list_previous(elem)) {
-        if (!gnet_snmp_ber_enc_varbind(asn1,
+        if (!gnet_snmp_ber_enc_varbind(ber,
 				       (GNetSnmpVarBind *) elem->data, error))
 	    return FALSE;
     }
 
-    if (!gnet_snmp_ber_enc_header(asn1, eoc, GNET_SNMP_ASN1_UNI,
+    if (!gnet_snmp_ber_enc_header(ber, eoc, GNET_SNMP_ASN1_UNI,
 				  GNET_SNMP_ASN1_CON, GNET_SNMP_ASN1_SEQ,
 				  error))
         return FALSE;
@@ -526,7 +531,7 @@ gnet_snmp_ber_enc_varbind_list(GNetSnmpBer *asn1, GList *vbl, GError **error)
 
 /**
  * gnet_snmp_ber_enc_varbind_list_null:
- * @asn1: the handle for the #GNetSnmpBer buffer.
+ * @ber: the handle for the #GNetSnmpBer buffer.
  * @vbl: the list of #GNetSnmpVarBind to encode
  * @error: the error object used to report errors.
  *
@@ -538,22 +543,22 @@ gnet_snmp_ber_enc_varbind_list(GNetSnmpBer *asn1, GList *vbl, GError **error)
  */
 
 gboolean 
-gnet_snmp_ber_enc_varbind_list_null(GNetSnmpBer *asn1, GList *vbl,
+gnet_snmp_ber_enc_varbind_list_null(GNetSnmpBer *ber, GList *vbl,
 				    GError **error)
 {
     guchar *eoc;
     GList *elem;
 
-    if (!gnet_snmp_ber_enc_eoc(asn1, &eoc, error))
+    if (!gnet_snmp_ber_enc_eoc(ber, &eoc, error))
         return FALSE;
 
     for (elem = g_list_last(vbl); elem; elem = g_list_previous(elem)) {
-        if (!gnet_snmp_ber_enc_varbind_null(asn1,
+        if (!gnet_snmp_ber_enc_varbind_null(ber,
 				    (GNetSnmpVarBind *) elem->data, error))
 	    return FALSE;
     }
 
-    if (!gnet_snmp_ber_enc_header(asn1, eoc, GNET_SNMP_ASN1_UNI,
+    if (!gnet_snmp_ber_enc_header(ber, eoc, GNET_SNMP_ASN1_UNI,
 				  GNET_SNMP_ASN1_CON, GNET_SNMP_ASN1_SEQ,
 				  error))
         return FALSE;
@@ -566,7 +571,7 @@ gnet_snmp_ber_enc_varbind_list_null(GNetSnmpBer *asn1, GList *vbl,
 
 /**
  * gnet_snmp_ber_dec_varbind_list:
- * @asn1: the handle for the #GNetSnmpBer buffer.
+ * @ber: the handle for the #GNetSnmpBer buffer.
  * @vbl: the pointer used to store the new list of #GNetSnmpVarBinds.
  * @error: the error object used to report errors.
  *
@@ -576,7 +581,7 @@ gnet_snmp_ber_enc_varbind_list_null(GNetSnmpBer *asn1, GList *vbl,
  */
 
 gboolean 
-gnet_snmp_ber_dec_varbind_list(GNetSnmpBer *asn1, GList **vbl, GError **error)
+gnet_snmp_ber_dec_varbind_list(GNetSnmpBer *ber, GList **vbl, GError **error)
 {
     guint cls, con, tag;
     guchar *eoc;
@@ -585,7 +590,7 @@ gnet_snmp_ber_dec_varbind_list(GNetSnmpBer *asn1, GList **vbl, GError **error)
     g_assert(vbl);
     
     *vbl = NULL;
-    if (!gnet_snmp_ber_dec_header(asn1, &eoc, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &eoc, &cls, &con, &tag, error))
         return FALSE;
     if (cls != GNET_SNMP_ASN1_UNI
 	|| con != GNET_SNMP_ASN1_CON
@@ -599,8 +604,8 @@ gnet_snmp_ber_dec_varbind_list(GNetSnmpBer *asn1, GList **vbl, GError **error)
         return FALSE;
     }
 
-    while (!gnet_snmp_ber_is_eoc(asn1, eoc)) {
-        if (!gnet_snmp_ber_dec_varbind(asn1, &vb, error)) {
+    while (!gnet_snmp_ber_is_eoc(ber, eoc)) {
+        if (!gnet_snmp_ber_dec_varbind(ber, &vb, error)) {
 	    g_list_foreach(*vbl, (GFunc) gnet_snmp_varbind_delete, NULL);
 	    g_list_free(*vbl);
 	    *vbl = NULL;
@@ -608,7 +613,7 @@ gnet_snmp_ber_dec_varbind_list(GNetSnmpBer *asn1, GList **vbl, GError **error)
 	}
 	*vbl = g_list_prepend(*vbl, vb);
     }
-    if (!gnet_snmp_ber_dec_eoc(asn1, eoc, error)) {
+    if (!gnet_snmp_ber_dec_eoc(ber, eoc, error)) {
 	g_list_foreach(*vbl, (GFunc) gnet_snmp_varbind_delete, NULL);
 	g_list_free(*vbl);
 	*vbl = NULL;
@@ -623,8 +628,8 @@ gnet_snmp_ber_dec_varbind_list(GNetSnmpBer *asn1, GList **vbl, GError **error)
 
 /**
  * gnet_snmp_ber_enc_standard_pdu:
- * &asn1: the handle for the #GNetSnmpBer buffer.
- * &pdu: the @GNetSnmpPdu to encode.
+ * @ber: the handle for the #GNetSnmpBer buffer.
+ * @pdu: the @GNetSnmpPdu to encode.
  * @error: the error object used to report errors.
  *
  * Encodes a standard SNMP PDU as defined in RFC 3416. Suppresses
@@ -633,37 +638,37 @@ gnet_snmp_ber_dec_varbind_list(GNetSnmpBer *asn1, GList **vbl, GError **error)
  * Returns: a gboolean value indicating success.
  */
 
-gboolean 
-gnet_snmp_ber_enc_standard_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
+static gboolean 
+gnet_snmp_ber_enc_standard_pdu(GNetSnmpBer *ber, GNetSnmpPdu *pdu,
 			       GError **error)
 {
     guchar *end;
 
     if (GNET_SNMP_PDU_CLASS_READ(pdu->type)) {
-	if (!gnet_snmp_ber_enc_varbind_list_null(asn1, pdu->varbind_list, error))
+	if (!gnet_snmp_ber_enc_varbind_list_null(ber, pdu->varbind_list, error))
 	    return FALSE;
     } else {
-	if (!gnet_snmp_ber_enc_varbind_list(asn1, pdu->varbind_list, error))
+	if (!gnet_snmp_ber_enc_varbind_list(ber, pdu->varbind_list, error))
 	    return FALSE;
     }
     
-    if (!gnet_snmp_ber_enc_gint32(asn1, &end, pdu->error_index, error))
+    if (!gnet_snmp_ber_enc_gint32(ber, &end, pdu->error_index, error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_header(asn1, end, GNET_SNMP_ASN1_UNI,
+    if (!gnet_snmp_ber_enc_header(ber, end, GNET_SNMP_ASN1_UNI,
 				  GNET_SNMP_ASN1_PRI, GNET_SNMP_ASN1_INT,
 				  error))
         return FALSE;
 
-    if (!gnet_snmp_ber_enc_gint32(asn1, &end, pdu->error_status, error))
+    if (!gnet_snmp_ber_enc_gint32(ber, &end, pdu->error_status, error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_header(asn1, end, GNET_SNMP_ASN1_UNI,
+    if (!gnet_snmp_ber_enc_header(ber, end, GNET_SNMP_ASN1_UNI,
 				  GNET_SNMP_ASN1_PRI, GNET_SNMP_ASN1_INT,
 				  error))
         return FALSE;
 
-    if (!gnet_snmp_ber_enc_gint32(asn1, &end, pdu->request_id, error))
+    if (!gnet_snmp_ber_enc_gint32(ber, &end, pdu->request_id, error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_header(asn1, end, GNET_SNMP_ASN1_UNI,
+    if (!gnet_snmp_ber_enc_header(ber, end, GNET_SNMP_ASN1_UNI,
 				  GNET_SNMP_ASN1_PRI, GNET_SNMP_ASN1_INT,
 				  error))
         return FALSE;
@@ -672,8 +677,8 @@ gnet_snmp_ber_enc_standard_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
 
 /**
  * gnet_snmp_ber_dec_standard_pdu:
- * &asn1: the handle for the #GNetSnmpBer buffer.
- * &pdu: the @GNetSnmpPdu to decode.
+ * @ber: the handle for the #GNetSnmpBer buffer.
+ * @pdu: the @GNetSnmpPdu to decode.
  * @error: the error object used to report errors.
  *
  * Decodes a standard SNMP PDU as defined in RFC 3416.
@@ -681,14 +686,14 @@ gnet_snmp_ber_enc_standard_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
  * Returns: a gboolean value indicating success.
  */
 
-gboolean 
-gnet_snmp_ber_dec_standard_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
+static gboolean 
+gnet_snmp_ber_dec_standard_pdu(GNetSnmpBer *ber, GNetSnmpPdu *pdu,
 			       GError **error)
 {
     guint cls, con, tag;
     guchar *end;
 
-    if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error))
         return FALSE;
     if (cls != GNET_SNMP_ASN1_UNI
 	|| con != GNET_SNMP_ASN1_PRI
@@ -701,10 +706,10 @@ gnet_snmp_ber_dec_standard_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
 	}
         return FALSE;
     }
-    if (!gnet_snmp_ber_dec_gint32(asn1, end, &pdu->request_id, error))
+    if (!gnet_snmp_ber_dec_gint32(ber, end, &pdu->request_id, error))
         return FALSE;
 
-    if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error))
         return FALSE;
     if (cls != GNET_SNMP_ASN1_UNI
 	|| con != GNET_SNMP_ASN1_PRI
@@ -717,10 +722,10 @@ gnet_snmp_ber_dec_standard_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
 	}
         return FALSE;
     }
-    if (!gnet_snmp_ber_dec_gint32(asn1, end, &pdu->error_status, error))
+    if (!gnet_snmp_ber_dec_gint32(ber, end, &pdu->error_status, error))
         return FALSE;
 
-    if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error))
         return FALSE;
     if (cls != GNET_SNMP_ASN1_UNI
 	|| con != GNET_SNMP_ASN1_PRI
@@ -733,29 +738,29 @@ gnet_snmp_ber_dec_standard_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu,
 	}
         return FALSE;
     }
-    if (!gnet_snmp_ber_dec_gint32(asn1, end, &pdu->error_index, error))
+    if (!gnet_snmp_ber_dec_gint32(ber, end, &pdu->error_index, error))
         return FALSE;
 
-    if (!gnet_snmp_ber_dec_varbind_list(asn1, &pdu->varbind_list, error))
+    if (!gnet_snmp_ber_dec_varbind_list(ber, &pdu->varbind_list, error))
 	return FALSE;
     return TRUE;
 }
 
 /**
  * gnet_snmp_ber_enc_trap_pdu:
- * &asn1: the handle for the #GNetSnmpBer buffer.
- * &pdu: the @GNetSnmpPdu to encode.
+ * @ber: the handle for the #GNetSnmpBer buffer.
+ * @pdu: the @GNetSnmpPdu to encode.
  * @error: the error object used to report errors.
  *
  * Encodes an SNMPv1 trap PDU as defined in RFC 1157. This function
  * also implements the notification parameter translation defined in
- * RFC 2576 section 3.
+ * RFC 3584 section 3.
  *
  * Returns: a gboolean value indicating success.
  */
 
-gboolean 
-gnet_snmp_ber_enc_trap_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
+static gboolean 
+gnet_snmp_ber_enc_trap_pdu(GNetSnmpBer *ber, GNetSnmpPdu *pdu, GError **error)
 {
     guchar *end;
 
@@ -850,41 +855,41 @@ gnet_snmp_ber_enc_trap_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 	new_varbind_list = g_list_append(new_varbind_list, vb);
     }
 
-    if (!gnet_snmp_ber_enc_varbind_list(asn1, new_varbind_list, error)) {
+    if (!gnet_snmp_ber_enc_varbind_list(ber, new_varbind_list, error)) {
 	g_list_free(new_varbind_list);
 	return FALSE;
     }
     g_list_free(new_varbind_list);
 
-    if (!gnet_snmp_ber_enc_guint32(asn1, &end, timestamp, error))
+    if (!gnet_snmp_ber_enc_guint32(ber, &end, timestamp, error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_header(asn1, end, GNET_SNMP_ASN1_APL,
+    if (!gnet_snmp_ber_enc_header(ber, end, GNET_SNMP_ASN1_APL,
 				  GNET_SNMP_ASN1_PRI, GNET_SNMP_ATAG_TIT,
 				  error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_gint32(asn1, &end, specific, error))
+    if (!gnet_snmp_ber_enc_gint32(ber, &end, specific, error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_header(asn1, end, GNET_SNMP_ASN1_UNI,
+    if (!gnet_snmp_ber_enc_header(ber, end, GNET_SNMP_ASN1_UNI,
 				  GNET_SNMP_ASN1_PRI, GNET_SNMP_ASN1_INT,
 				  error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_gint32(asn1, &end, generic, error))
+    if (!gnet_snmp_ber_enc_gint32(ber, &end, generic, error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_header(asn1, end, GNET_SNMP_ASN1_UNI,
+    if (!gnet_snmp_ber_enc_header(ber, end, GNET_SNMP_ASN1_UNI,
 				  GNET_SNMP_ASN1_PRI, GNET_SNMP_ASN1_INT,
 				  error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_octets(asn1, &end, ip_address, ip_address_len,
+    if (!gnet_snmp_ber_enc_octets(ber, &end, ip_address, ip_address_len,
 				  error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_header(asn1, end, GNET_SNMP_ASN1_APL,
+    if (!gnet_snmp_ber_enc_header(ber, end, GNET_SNMP_ASN1_APL,
 				  GNET_SNMP_ASN1_PRI, GNET_SNMP_ATAG_IPA,
 				  error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_oid(asn1, &end, enterprise, enterprise_len,
+    if (!gnet_snmp_ber_enc_oid(ber, &end, enterprise, enterprise_len,
 			       error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_header(asn1, end, GNET_SNMP_ASN1_UNI,
+    if (!gnet_snmp_ber_enc_header(ber, end, GNET_SNMP_ASN1_UNI,
 				  GNET_SNMP_ASN1_PRI, GNET_SNMP_ASN1_OJI,
 				  error))
         return FALSE;
@@ -894,19 +899,19 @@ gnet_snmp_ber_enc_trap_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 
 /**
  * gnet_snmp_ber_dec_trap_pdu:
- * &asn1: the handle for the #GNetSnmpBer buffer.
- * &pdu: the @GNetSnmpPdu to decode.
+ * @ber: the handle for the #GNetSnmpBer buffer.
+ * @pdu: the @GNetSnmpPdu to decode.
  * @error: the error object used to report errors.
  *
  * Decodes an SNMPv1 trap PDU as defined in RFC 1157. This function
  * also implements the notification parameter translation defined in
- * RFC 2576 section 3.
+ * RFC 3584 section 3.
  *
  * Returns: a gboolean value indicating success.
  */
 
-gboolean 
-gnet_snmp_ber_dec_trap_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
+static gboolean 
+gnet_snmp_ber_dec_trap_pdu(GNetSnmpBer *ber, GNetSnmpPdu *pdu, GError **error)
 {
     guint cls, con, tag;
     guchar *end;
@@ -922,7 +927,7 @@ gnet_snmp_ber_dec_trap_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
     gint32  specific;
     guint32 timestamp;
 
-    if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error))
         return FALSE;
     if (cls != GNET_SNMP_ASN1_UNI
 	|| con != GNET_SNMP_ASN1_PRI
@@ -935,10 +940,10 @@ gnet_snmp_ber_dec_trap_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 	}
         return FALSE;
     }
-    if (!gnet_snmp_ber_dec_oid(asn1, end, &enterprise, &enterprise_len, error))
+    if (!gnet_snmp_ber_dec_oid(ber, end, &enterprise, &enterprise_len, error))
         return FALSE;
 
-    if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error))
         return FALSE;
     if (!((cls == GNET_SNMP_ASN1_APL
 	   && con == GNET_SNMP_ASN1_PRI
@@ -954,11 +959,11 @@ gnet_snmp_ber_dec_trap_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 	}
         return FALSE;
     }
-    if (!gnet_snmp_ber_dec_octets(asn1, end, &ip_address, &ip_address_len,
+    if (!gnet_snmp_ber_dec_octets(ber, end, &ip_address, &ip_address_len,
 				  error))
         return FALSE;
 
-    if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error))
         return FALSE;
     if (cls != GNET_SNMP_ASN1_UNI
 	|| con != GNET_SNMP_ASN1_PRI
@@ -971,10 +976,10 @@ gnet_snmp_ber_dec_trap_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 	}
         return FALSE;
     }
-    if (!gnet_snmp_ber_dec_gint32(asn1, end, &generic, error))
+    if (!gnet_snmp_ber_dec_gint32(ber, end, &generic, error))
         return FALSE;
 
-    if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error))
         return FALSE;
     if (cls != GNET_SNMP_ASN1_UNI
 	|| con != GNET_SNMP_ASN1_PRI
@@ -987,10 +992,10 @@ gnet_snmp_ber_dec_trap_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 	}
         return FALSE;
     }
-    if (!gnet_snmp_ber_dec_gint32(asn1, end, &specific, error))
+    if (!gnet_snmp_ber_dec_gint32(ber, end, &specific, error))
         return FALSE;
 
-    if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error))
         return FALSE;
     if (!((cls == GNET_SNMP_ASN1_APL
 	   && con == GNET_SNMP_ASN1_PRI
@@ -1006,14 +1011,14 @@ gnet_snmp_ber_dec_trap_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 	}
         return FALSE;
     }
-    if (!gnet_snmp_ber_dec_guint32(asn1, end, &timestamp, error))
+    if (!gnet_snmp_ber_dec_guint32(ber, end, &timestamp, error))
         return FALSE;
 
-    if (!gnet_snmp_ber_dec_varbind_list(asn1, &pdu->varbind_list, error))
+    if (!gnet_snmp_ber_dec_varbind_list(ber, &pdu->varbind_list, error))
 	return FALSE;
     
     /*
-     * Add varbinds as described in RFC 2576 section 3.1.
+     * Add varbinds as described in RFC 3584 section 3.1.
      */
 
     if (generic >= 0 && generic < 6) {
@@ -1047,9 +1052,9 @@ gnet_snmp_ber_dec_trap_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
     pdu->varbind_list = g_list_prepend(pdu->varbind_list, vb);
 
     /* Search for any magic varbinds potentially inserted by a proxy
-     * as described in RFC 2576 section 3. If the proxy varbinds are
+     * as described in RFC 3584 section 3. If the proxy varbinds are
      * not present, we claim to be proxy and insert them according to
-     * RFC 2576 section 3.1 paragraph (4). */
+     * RFC 3584 section 3.1 paragraph (4). */
 
     for (elem = pdu->varbind_list; elem; elem = g_list_next(elem)) {
 	vb = elem->data;
@@ -1099,7 +1104,7 @@ gnet_snmp_ber_dec_trap_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 
 /**
  * gnet_snmp_ber_enc_pdu_v1:
- * @asn1: the handle for the #GNetSnmpBer buffer.
+ * @ber: the handle for the #GNetSnmpBer buffer.
  * @pdu: the RFC 1157 SNMP PDU to encode.
  * @error: the error object used to report errors.
  *
@@ -1109,15 +1114,11 @@ gnet_snmp_ber_dec_trap_pdu(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
  */
 
 gboolean
-gnet_snmp_ber_enc_pdu_v1(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
+gnet_snmp_ber_enc_pdu_v1(GNetSnmpBer *ber, GNetSnmpPdu *pdu, GError **error)
 {
     guchar *eoc;
     GList *elem;
     
-    /* xxx need to ensure that non SNMPv1 types in the varbind cause
-     * an error and that exceptions are treated as errors and NULL
-     * values */
-
     for (elem = pdu->varbind_list; elem; elem = g_list_next(elem)) {
 	GNetSnmpVarBind *vb = (GNetSnmpVarBind *) elem->data;
 	/* better be explicit ... */
@@ -1156,18 +1157,18 @@ gnet_snmp_ber_enc_pdu_v1(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
     /* xxx check for a valid message type, converting silently (?)
      * where possible */
 
-    if (!gnet_snmp_ber_enc_eoc(asn1, &eoc, error))
+    if (!gnet_snmp_ber_enc_eoc(ber, &eoc, error))
         return FALSE;
     switch (pdu->type) {
     case GNET_SNMP_PDU_GET:
     case GNET_SNMP_PDU_NEXT:
     case GNET_SNMP_PDU_RESPONSE:
     case GNET_SNMP_PDU_SET:
-	if (!gnet_snmp_ber_enc_standard_pdu(asn1, pdu, error))
+	if (!gnet_snmp_ber_enc_standard_pdu(ber, pdu, error))
 	    return FALSE;
 	break;
     case GNET_SNMP_PDU_TRAP:
-	if (!gnet_snmp_ber_enc_trap_pdu(asn1, pdu, error))
+	if (!gnet_snmp_ber_enc_trap_pdu(ber, pdu, error))
 	    return FALSE;
 	break;
     default:
@@ -1179,7 +1180,7 @@ gnet_snmp_ber_enc_pdu_v1(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 	}
 	return FALSE;
     }
-    if (!gnet_snmp_ber_enc_header(asn1, eoc, GNET_SNMP_ASN1_CTX,
+    if (!gnet_snmp_ber_enc_header(ber, eoc, GNET_SNMP_ASN1_CTX,
 				  GNET_SNMP_ASN1_CON, pdu->type, error))
         return FALSE;
     return TRUE;
@@ -1187,7 +1188,7 @@ gnet_snmp_ber_enc_pdu_v1(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 
 /**
  * gnet_snmp_ber_dec_pdu_v1:
- * @asn1: the handle for the #GNetSnmpBer buffer.
+ * @ber: the handle for the #GNetSnmpBer buffer.
  * @pdu: the RFC 1157 SNMP PDU to encode.
  * @error: the error object used to report errors.
  *
@@ -1197,7 +1198,7 @@ gnet_snmp_ber_enc_pdu_v1(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
  */
 
 gboolean 
-gnet_snmp_ber_dec_pdu_v1(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
+gnet_snmp_ber_dec_pdu_v1(GNetSnmpBer *ber, GNetSnmpPdu *pdu, GError **error)
 {
     guint cls, con;
     guchar *eoc;
@@ -1206,7 +1207,7 @@ gnet_snmp_ber_dec_pdu_v1(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
      * an error and that exceptions are treated as errors and NULL
      * values */
     
-    if (!gnet_snmp_ber_dec_header(asn1, &eoc,
+    if (!gnet_snmp_ber_dec_header(ber, &eoc,
 				  &cls, &con, (guint32 *) &pdu->type, error))
         return FALSE;
     if (cls != GNET_SNMP_ASN1_CTX || con != GNET_SNMP_ASN1_CON) {
@@ -1223,11 +1224,11 @@ gnet_snmp_ber_dec_pdu_v1(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
     case GNET_SNMP_PDU_NEXT:
     case GNET_SNMP_PDU_RESPONSE:
     case GNET_SNMP_PDU_SET:
-	if (!gnet_snmp_ber_dec_standard_pdu(asn1, pdu, error))
+	if (!gnet_snmp_ber_dec_standard_pdu(ber, pdu, error))
 	    return FALSE;
 	break;
     case GNET_SNMP_PDU_TRAP:
-	if (!gnet_snmp_ber_dec_trap_pdu(asn1, pdu, error))
+	if (!gnet_snmp_ber_dec_trap_pdu(ber, pdu, error))
 	    return FALSE;
 	break;
     default:
@@ -1239,14 +1240,14 @@ gnet_snmp_ber_dec_pdu_v1(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 	}
 	return FALSE;
     }
-    if (!gnet_snmp_ber_dec_eoc(asn1, eoc, error))
+    if (!gnet_snmp_ber_dec_eoc(ber, eoc, error))
         return FALSE;
     return TRUE;
 }
 
 /**
  * gnet_snmp_ber_enc_pdu_v2:
- * @asn1: the handle for the #GNetSnmpBer buffer.
+ * @ber: the handle for the #GNetSnmpBer buffer.
  * @pdu: the RFC 3416 SNMP PDU to encode.
  * @error: the error object used to report errors.
  *
@@ -1256,11 +1257,11 @@ gnet_snmp_ber_dec_pdu_v1(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
  */
 
 gboolean 
-gnet_snmp_ber_enc_pdu_v2(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
+gnet_snmp_ber_enc_pdu_v2(GNetSnmpBer *ber, GNetSnmpPdu *pdu, GError **error)
 {
     guchar *eoc;
     
-    if (!gnet_snmp_ber_enc_eoc(asn1, &eoc, error))
+    if (!gnet_snmp_ber_enc_eoc(ber, &eoc, error))
         return FALSE;
     switch (pdu->type) {
     case GNET_SNMP_PDU_GET:
@@ -1270,7 +1271,7 @@ gnet_snmp_ber_enc_pdu_v2(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
     case GNET_SNMP_PDU_BULK:
     case GNET_SNMP_PDU_INFORM:
     case GNET_SNMP_PDU_TRAP:
-	if (!gnet_snmp_ber_enc_standard_pdu(asn1, pdu, error))
+	if (!gnet_snmp_ber_enc_standard_pdu(ber, pdu, error))
 	    return FALSE;
 	break;
     default:
@@ -1282,7 +1283,7 @@ gnet_snmp_ber_enc_pdu_v2(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 	}
 	return FALSE;
     }
-    if (!gnet_snmp_ber_enc_header(asn1, eoc, GNET_SNMP_ASN1_CTX,
+    if (!gnet_snmp_ber_enc_header(ber, eoc, GNET_SNMP_ASN1_CTX,
 				  GNET_SNMP_ASN1_CON, pdu->type, error))
         return FALSE;
     return TRUE;
@@ -1290,7 +1291,7 @@ gnet_snmp_ber_enc_pdu_v2(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 
 /**
  * gnet_snmp_ber_dec_pdu_v2:
- * @asn1: the handle for the #GNetSnmpBer buffer.
+ * @ber: the handle for the #GNetSnmpBer buffer.
  * @pdu: the RFC 3416 SNMP PDU to encode.
  * @error: the error object used to report errors.
  *
@@ -1300,12 +1301,12 @@ gnet_snmp_ber_enc_pdu_v2(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
  */
 
 gboolean 
-gnet_snmp_ber_dec_pdu_v2(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
+gnet_snmp_ber_dec_pdu_v2(GNetSnmpBer *ber, GNetSnmpPdu *pdu, GError **error)
 {
     guint cls, con;
     guchar *eoc;
     
-    if (!gnet_snmp_ber_dec_header(asn1, &eoc,
+    if (!gnet_snmp_ber_dec_header(ber, &eoc,
 				  &cls, &con, (guint32 *) &pdu->type, error))
         return FALSE;
     if (cls != GNET_SNMP_ASN1_CTX || con != GNET_SNMP_ASN1_CON) {
@@ -1325,7 +1326,7 @@ gnet_snmp_ber_dec_pdu_v2(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
     case GNET_SNMP_PDU_BULK:
     case GNET_SNMP_PDU_INFORM:
     case GNET_SNMP_PDU_TRAP:
-	if (!gnet_snmp_ber_dec_standard_pdu(asn1, pdu, error))
+	if (!gnet_snmp_ber_dec_standard_pdu(ber, pdu, error))
 	    return FALSE;
 	break;
     default:
@@ -1337,14 +1338,14 @@ gnet_snmp_ber_dec_pdu_v2(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 	}
 	return FALSE;
     }
-    if (!gnet_snmp_ber_dec_eoc(asn1, eoc, error))
+    if (!gnet_snmp_ber_dec_eoc(ber, eoc, error))
         return FALSE;
     return TRUE;
 }
 
 /**
  * gnet_snmp_ber_enc_pdu_v3:
- * @asn1: the handle for the #GNetSnmpBer buffer.
+ * @ber: the handle for the #GNetSnmpBer buffer.
  * @pdu: the RFC 3416 SNMP PDU to encode.
  * @error: the error object used to report errors.
  *
@@ -1354,33 +1355,33 @@ gnet_snmp_ber_dec_pdu_v2(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
  */
 
 gboolean 
-gnet_snmp_ber_enc_pdu_v3(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
+gnet_snmp_ber_enc_pdu_v3(GNetSnmpBer *ber, GNetSnmpPdu *pdu, GError **error)
 {
     guchar *eoc, *end;
 
-    if (!gnet_snmp_ber_enc_eoc(asn1, &eoc, error))
+    if (!gnet_snmp_ber_enc_eoc(ber, &eoc, error))
         return FALSE;
 
-    if (!gnet_snmp_ber_enc_pdu_v2(asn1, pdu, error))
+    if (!gnet_snmp_ber_enc_pdu_v2(ber, pdu, error))
 	return FALSE;
 
-    if (!gnet_snmp_ber_enc_octets(asn1, &end,
+    if (!gnet_snmp_ber_enc_octets(ber, &end,
 				  pdu->context_name, pdu->context_name_len,
 				  error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_header(asn1, end, GNET_SNMP_ASN1_UNI,
+    if (!gnet_snmp_ber_enc_header(ber, end, GNET_SNMP_ASN1_UNI,
 				  GNET_SNMP_ASN1_PRI, GNET_SNMP_ASN1_OTS,
 				  error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_octets(asn1, &end,
+    if (!gnet_snmp_ber_enc_octets(ber, &end,
 			  pdu->context_engineid, pdu->context_engineid_len,
 				  error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_header(asn1, end, GNET_SNMP_ASN1_UNI,
+    if (!gnet_snmp_ber_enc_header(ber, end, GNET_SNMP_ASN1_UNI,
 				  GNET_SNMP_ASN1_PRI, GNET_SNMP_ASN1_OTS,
 				  error))
         return FALSE;
-    if (!gnet_snmp_ber_enc_header(asn1, eoc, GNET_SNMP_ASN1_UNI,
+    if (!gnet_snmp_ber_enc_header(ber, eoc, GNET_SNMP_ASN1_UNI,
 				  GNET_SNMP_ASN1_CON, GNET_SNMP_ASN1_SEQ,
 				  error))
         return FALSE;
@@ -1389,7 +1390,7 @@ gnet_snmp_ber_enc_pdu_v3(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 
 /**
  * gnet_snmp_ber_dec_pdu_v3:
- * @asn1: the handle for the #GNetSnmpBer buffer.
+ * @ber: the handle for the #GNetSnmpBer buffer.
  * @pdu: the RFC 3416 SNMP PDU to decode.
  * @error: the error object used to report errors.
  *
@@ -1399,12 +1400,12 @@ gnet_snmp_ber_enc_pdu_v3(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
  */
 
 gboolean 
-gnet_snmp_ber_dec_pdu_v3(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
+gnet_snmp_ber_dec_pdu_v3(GNetSnmpBer *ber, GNetSnmpPdu *pdu, GError **error)
 {
     guint cls, con, tag;
     guchar *eoc, *end;
 
-    if (!gnet_snmp_ber_dec_header(asn1, &eoc, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &eoc, &cls, &con, &tag, error))
         return FALSE;
     if (cls != GNET_SNMP_ASN1_UNI
 	|| con != GNET_SNMP_ASN1_CON
@@ -1418,7 +1419,7 @@ gnet_snmp_ber_dec_pdu_v3(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
         return FALSE;
     }
 
-    if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error))
 	return FALSE;
     if (cls != GNET_SNMP_ASN1_UNI
 	|| con != GNET_SNMP_ASN1_PRI
@@ -1431,11 +1432,11 @@ gnet_snmp_ber_dec_pdu_v3(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 	}
 	return FALSE;
     }
-    if (!gnet_snmp_ber_dec_octets(asn1, end, &pdu->context_engineid,
+    if (!gnet_snmp_ber_dec_octets(ber, end, &pdu->context_engineid,
 				  &pdu->context_engineid_len, error))
         return FALSE;
 
-    if (!gnet_snmp_ber_dec_header(asn1, &end, &cls, &con, &tag, error))
+    if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error))
 	return FALSE;
     if (cls != GNET_SNMP_ASN1_UNI
 	|| con != GNET_SNMP_ASN1_PRI
@@ -1448,11 +1449,11 @@ gnet_snmp_ber_dec_pdu_v3(GNetSnmpBer *asn1, GNetSnmpPdu *pdu, GError **error)
 	}
 	return FALSE;
     }
-    if (!gnet_snmp_ber_dec_octets(asn1, end, &pdu->context_name,
+    if (!gnet_snmp_ber_dec_octets(ber, end, &pdu->context_name,
 				  &pdu->context_name_len, error))
         return FALSE;
     
-    if (!gnet_snmp_ber_dec_pdu_v2(asn1, pdu, error))
+    if (!gnet_snmp_ber_dec_pdu_v2(ber, pdu, error))
 	return FALSE;
 
     return TRUE;

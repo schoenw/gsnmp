@@ -23,6 +23,212 @@
 
 GNetSnmpDebugFlags gnet_snmp_debug_flags = 0;
 
+/** Encodes an SNMP message as an ASN.1 SEQUENCE.
+ *
+ * \param ber the handle for the #GNetSnmpBer buffer.
+ * \param msg the pointer to the #GNetSnmpMsg to encode.
+ * \param error the error object used to report errors.
+ *
+ * This function encodes an SNMP message into a BER encoded ASN.1
+ * SEQUENCE. Errors are reported via the error parameter if it is not
+ * NULL.
+ *
+ * \return a gboolean value indicating success.
+ */
+
+gboolean
+gnet_snmp_ber_enc_msg(GNetSnmpBer *ber, GNetSnmpMsg *msg,
+		      GError **error)
+{
+    guchar *eoc, *end;
+    GNetSnmpPdu *pdu = (GNetSnmpPdu *) msg->data;
+    
+    if (!gnet_snmp_ber_enc_eoc(ber, &eoc, error))
+	return FALSE;
+
+    switch (msg->version) {
+    case GNET_SNMP_V1:
+	if (pdu && !gnet_snmp_ber_enc_pdu_v1(ber, pdu, error))
+	    return FALSE;
+	break;
+    case GNET_SNMP_V2C:
+	if (pdu && !gnet_snmp_ber_enc_pdu_v2(ber, pdu, error))
+	    return FALSE;
+	break;
+    case GNET_SNMP_V3:
+	if (pdu && !gnet_snmp_ber_enc_pdu_v3(ber, pdu, error))
+	    return FALSE;
+	break;
+    default:
+	g_assert_not_reached();
+    }
+
+    switch (msg->version) {
+    case GNET_SNMP_V1:
+    case GNET_SNMP_V2C:
+	if (!gnet_snmp_ber_enc_octets(ber, &end,
+				      msg->community, msg->community_len,
+				      error))
+	    return FALSE;
+	if (!gnet_snmp_ber_enc_header(ber, end, GNET_SNMP_ASN1_UNI,
+				      GNET_SNMP_ASN1_PRI, GNET_SNMP_ASN1_OTS,
+				      error))
+	    return FALSE;
+	if (!gnet_snmp_ber_enc_gint32(ber, &end, msg->version, error))
+	    return FALSE;
+	if (!gnet_snmp_ber_enc_header(ber, end, GNET_SNMP_ASN1_UNI,
+				      GNET_SNMP_ASN1_PRI, GNET_SNMP_ASN1_INT,
+				      error))
+	    return FALSE;
+	break;
+    case GNET_SNMP_V3:
+	/* xxx */
+	break;
+    default:
+	g_assert_not_reached();
+    }
+
+    if (!gnet_snmp_ber_enc_header(ber, eoc, GNET_SNMP_ASN1_UNI,
+				  GNET_SNMP_ASN1_CON, GNET_SNMP_ASN1_SEQ,
+				  error))
+        return FALSE;
+
+    return TRUE;
+}
+
+/** Decodes an SNMP message from an ASN.1 SEQUENCE.
+
+ * \param ber the handle for the #GNetSnmpBer buffer.
+ * \param msg the pointer to the #GNetSnmpMsg to encode.
+ * \param error the error object used to report errors.
+ *
+ * This function encodes an SNMP message from an BER encoded ASN.1
+ * SEQUENCE. Errors are reported via the error parameter if it is not
+ * NULL.
+ *
+ * \return a gboolean value indicating success.
+ */
+
+gboolean
+gnet_snmp_ber_dec_msg(GNetSnmpBer *ber, GNetSnmpMsg *msg,
+		      GError **error)
+{
+    guint cls, con, tag;
+    guchar *eoc, *end;
+    
+    if (!gnet_snmp_ber_dec_header(ber, &eoc, &cls, &con, &tag, error))
+        return FALSE;
+    if (cls != GNET_SNMP_ASN1_UNI
+	|| con != GNET_SNMP_ASN1_CON
+	|| tag != GNET_SNMP_ASN1_SEQ) {
+	if (error) {
+	    g_set_error(error,
+			GNET_SNMP_BER_ERROR,
+			GNET_SNMP_BER_ERROR_DEC_BADVALUE,
+			"message starts with unexpected tag %d", tag); 
+	}
+        return FALSE;
+    }
+
+    if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error))
+	return FALSE;
+    if (cls != GNET_SNMP_ASN1_UNI
+	|| con != GNET_SNMP_ASN1_PRI
+	|| tag != GNET_SNMP_ASN1_INT) {
+	if (error) {
+	    g_set_error(error,
+			GNET_SNMP_BER_ERROR,
+			GNET_SNMP_BER_ERROR_DEC_BADVALUE,
+			"version has unexpected tag %d", tag); 
+	}
+        return FALSE;
+    }
+    if (!gnet_snmp_ber_dec_gint32(ber, end, &msg->version, error))
+	return FALSE;
+
+    switch (msg->version) {
+    case GNET_SNMP_V1:
+    case GNET_SNMP_V2C:
+	if (!gnet_snmp_ber_dec_header(ber, &end, &cls, &con, &tag, error))
+	    return FALSE;
+	if (cls != GNET_SNMP_ASN1_UNI
+	    || con != GNET_SNMP_ASN1_PRI
+	    || tag != GNET_SNMP_ASN1_OTS) {
+	    if (error) {
+		g_set_error(error,
+			    GNET_SNMP_BER_ERROR,
+			    GNET_SNMP_BER_ERROR_DEC_BADVALUE,
+			    "community has unexpected tag %d", tag); 
+	    }
+	    return FALSE;
+	}
+	if (!gnet_snmp_ber_dec_octets(ber, end, &msg->community,
+				      &msg->community_len, error))
+	    return FALSE;
+	break;
+
+    case GNET_SNMP_V3:
+	/* xxx */
+	break;
+    default:
+	if (error) {
+	    g_set_error(error,
+			GNET_SNMP_BER_ERROR,
+			GNET_SNMP_BER_ERROR_ENC_BADVALUE,
+			"message with unsupported version number %d",
+			msg->version);
+	}
+	return FALSE;
+    }
+
+    if (! gnet_snmp_ber_is_eoc(ber, eoc)) {
+	GNetSnmpPdu _pdu;
+	GNetSnmpPdu *pdu = msg->data ? (GNetSnmpPdu *) msg->data : &_pdu;
+	switch (msg->version) {
+	case GNET_SNMP_V1:
+	    if (!gnet_snmp_ber_dec_pdu_v1(ber, pdu, error)) {
+		if (pdu->varbind_list) {
+		    g_list_foreach(pdu->varbind_list,
+				   (GFunc) gnet_snmp_varbind_delete, NULL);
+		    g_list_free(pdu->varbind_list);
+		}
+		return FALSE;
+	    }
+	    break;
+	case GNET_SNMP_V2C:
+	    if (!gnet_snmp_ber_dec_pdu_v2(ber, pdu, error)) {
+		if (pdu->varbind_list) {
+		    g_list_foreach(pdu->varbind_list,
+				   (GFunc) gnet_snmp_varbind_delete, NULL);
+		    g_list_free(pdu->varbind_list);
+		}
+		return FALSE;
+	    }
+	    break;
+	case GNET_SNMP_V3:
+	    if (!gnet_snmp_ber_dec_pdu_v3(ber, pdu, error)) {
+		if (pdu->varbind_list) {
+		    g_list_foreach(pdu->varbind_list,
+				   (GFunc) gnet_snmp_varbind_delete, NULL);
+		    g_list_free(pdu->varbind_list);
+		}
+		return FALSE;
+	    }
+	    break;
+	}
+    }
+
+    if (!gnet_snmp_ber_dec_eoc(ber, eoc, error)) {
+        return FALSE;
+    }
+    
+
+    return TRUE;
+}
+
+
+
+
 /* This modules implements the formatting of the different SNMP versions. 
  * The interface is documented in RFC2271. 
  */
@@ -102,6 +308,7 @@ GNetSnmpDebugFlags gnet_snmp_debug_flags = 0;
  * ----------------------------------------------------------------------------
  */
 
+#if 0
 static gboolean
 snmpv1_prepare_outgoing_message(GNetSnmpTDomain transportDomain, 
                          GInetAddr *transportAddress,
@@ -272,12 +479,14 @@ snmpv1_release_state( gpointer stateReference)
     if (stateReference) g_free(stateReference);
     return TRUE;
 }
+#endif
 
 /* ----------------------------------------------------------------------------
  *                          SNMP V2c Message Processing Model
  * ----------------------------------------------------------------------------
  */
 
+#if 0
 static gboolean
 snmpv2c_prepare_outgoing_message(GNetSnmpTDomain transportDomain, 
                          GInetAddr *transportAddress,
@@ -447,12 +656,14 @@ snmpv2c_release_state( gpointer stateReference)
 {
     return TRUE;
 }
+#endif
 
 /* ----------------------------------------------------------------------------
  *                          SNMP V3 Message Processing Model
  * ----------------------------------------------------------------------------
  */
 
+#if 0
 static gboolean
 snmpv3_prepare_outgoing_message(GNetSnmpTDomain transportDomain, 
                          GInetAddr *transportAddress,
@@ -643,38 +854,5 @@ snmpv3_release_state( gpointer stateReference)
 {
     return TRUE;
 }
+#endif
 
-
-gboolean
-g_message_init()
-{
-    struct g_message *my_message;
-    
-    my_message = g_malloc(sizeof(struct g_message));
-    
-    my_message->prepareOutgoingMessage = snmpv1_prepare_outgoing_message;
-    my_message->prepareResponseMessage = snmpv1_prepare_response_message;
-    my_message->prepareDataElements    = snmpv1_prepare_data_elements;
-    my_message->releaseState           = snmpv1_release_state;
-    
-    g_register_message(PMODEL_SNMPV1, my_message);
-    
-    my_message = g_malloc(sizeof(struct g_message));
-    
-    my_message->prepareOutgoingMessage = snmpv2c_prepare_outgoing_message;
-    my_message->prepareResponseMessage = snmpv2c_prepare_response_message;
-    my_message->prepareDataElements    = snmpv2c_prepare_data_elements;
-    my_message->releaseState           = snmpv2c_release_state;
-    
-    g_register_message(PMODEL_SNMPV2C, my_message);
-    
-    my_message = g_malloc(sizeof(struct g_message));
-    
-    my_message->prepareOutgoingMessage = snmpv3_prepare_outgoing_message;
-    my_message->prepareResponseMessage = snmpv3_prepare_response_message;
-    my_message->prepareDataElements    = snmpv3_prepare_data_elements;
-    my_message->releaseState           = snmpv3_release_state;
-    
-    g_register_message(PMODEL_SNMPV3, my_message);
-    return TRUE;
-}

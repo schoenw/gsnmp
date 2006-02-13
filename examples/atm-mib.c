@@ -640,7 +640,7 @@ atm_mib_get_atmMIBObjects(GNetSnmp *s, atm_mib_atmMIBObjects_t **atmMIBObjects, 
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;
@@ -752,7 +752,7 @@ atm_mib_get_atmInterfaceConfEntry(GNetSnmp *s, atm_mib_atmInterfaceConfEntry_t *
     len = pack_atmInterfaceConfEntry(base, ifIndex);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmInterfaceConfEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -764,7 +764,7 @@ atm_mib_get_atmInterfaceConfEntry(GNetSnmp *s, atm_mib_atmInterfaceConfEntry_t *
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;
@@ -784,7 +784,7 @@ atm_mib_set_atmInterfaceConfEntry(GNetSnmp *s, atm_mib_atmInterfaceConfEntry_t *
     len = pack_atmInterfaceConfEntry(base, atmInterfaceConfEntry->ifIndex);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmInterfaceConfEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -915,7 +915,7 @@ atm_mib_get_atmInterfaceDs3PlcpEntry(GNetSnmp *s, atm_mib_atmInterfaceDs3PlcpEnt
     len = pack_atmInterfaceDs3PlcpEntry(base, ifIndex);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmInterfaceDs3PlcpEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -927,7 +927,7 @@ atm_mib_get_atmInterfaceDs3PlcpEntry(GNetSnmp *s, atm_mib_atmInterfaceDs3PlcpEnt
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;
@@ -1052,7 +1052,7 @@ atm_mib_get_atmInterfaceTCEntry(GNetSnmp *s, atm_mib_atmInterfaceTCEntry_t **atm
     len = pack_atmInterfaceTCEntry(base, ifIndex);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmInterfaceTCEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -1064,7 +1064,7 @@ atm_mib_get_atmInterfaceTCEntry(GNetSnmp *s, atm_mib_atmInterfaceTCEntry_t **atm
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;
@@ -1190,7 +1190,7 @@ atm_mib_get_atmTrafficDescrParamEntry(GNetSnmp *s, atm_mib_atmTrafficDescrParamE
     len = pack_atmTrafficDescrParamEntry(base, atmTrafficDescrParamIndex);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmTrafficDescrParamEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -1202,7 +1202,7 @@ atm_mib_get_atmTrafficDescrParamEntry(GNetSnmp *s, atm_mib_atmTrafficDescrParamE
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;
@@ -1222,7 +1222,7 @@ atm_mib_set_atmTrafficDescrParamEntry(GNetSnmp *s, atm_mib_atmTrafficDescrParamE
     len = pack_atmTrafficDescrParamEntry(base, atmTrafficDescrParamEntry->atmTrafficDescrParamIndex);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmTrafficDescrParamEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -1359,7 +1359,7 @@ atm_mib_get_atmVplEntry(GNetSnmp *s, atm_mib_atmVplEntry_t **atmVplEntry, gint32
     len = pack_atmVplEntry(base, ifIndex, atmVplVpi);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmVplEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -1371,7 +1371,7 @@ atm_mib_get_atmVplEntry(GNetSnmp *s, atm_mib_atmVplEntry_t **atmVplEntry, gint32
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;
@@ -1391,7 +1391,7 @@ atm_mib_set_atmVplEntry(GNetSnmp *s, atm_mib_atmVplEntry_t *atmVplEntry, gint64 
     len = pack_atmVplEntry(base, atmVplEntry->ifIndex, atmVplEntry->atmVplVpi);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmVplEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -1534,7 +1534,7 @@ atm_mib_get_atmVclEntry(GNetSnmp *s, atm_mib_atmVclEntry_t **atmVclEntry, gint32
     len = pack_atmVclEntry(base, ifIndex, atmVclVpi, atmVclVci);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmVclEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -1546,7 +1546,7 @@ atm_mib_get_atmVclEntry(GNetSnmp *s, atm_mib_atmVclEntry_t **atmVclEntry, gint32
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;
@@ -1566,7 +1566,7 @@ atm_mib_set_atmVclEntry(GNetSnmp *s, atm_mib_atmVclEntry_t *atmVclEntry, gint64 
     len = pack_atmVclEntry(base, atmVclEntry->ifIndex, atmVclEntry->atmVclVpi, atmVclEntry->atmVclVci);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmVclEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -1721,7 +1721,7 @@ atm_mib_get_atmVpCrossConnectEntry(GNetSnmp *s, atm_mib_atmVpCrossConnectEntry_t
     len = pack_atmVpCrossConnectEntry(base, atmVpCrossConnectIndex, atmVpCrossConnectLowIfIndex, atmVpCrossConnectLowVpi, atmVpCrossConnectHighIfIndex, atmVpCrossConnectHighVpi);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmVpCrossConnectEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -1733,7 +1733,7 @@ atm_mib_get_atmVpCrossConnectEntry(GNetSnmp *s, atm_mib_atmVpCrossConnectEntry_t
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;
@@ -1753,7 +1753,7 @@ atm_mib_set_atmVpCrossConnectEntry(GNetSnmp *s, atm_mib_atmVpCrossConnectEntry_t
     len = pack_atmVpCrossConnectEntry(base, atmVpCrossConnectEntry->atmVpCrossConnectIndex, atmVpCrossConnectEntry->atmVpCrossConnectLowIfIndex, atmVpCrossConnectEntry->atmVpCrossConnectLowVpi, atmVpCrossConnectEntry->atmVpCrossConnectHighIfIndex, atmVpCrossConnectEntry->atmVpCrossConnectHighVpi);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmVpCrossConnectEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -1920,7 +1920,7 @@ atm_mib_get_atmVcCrossConnectEntry(GNetSnmp *s, atm_mib_atmVcCrossConnectEntry_t
     len = pack_atmVcCrossConnectEntry(base, atmVcCrossConnectIndex, atmVcCrossConnectLowIfIndex, atmVcCrossConnectLowVpi, atmVcCrossConnectLowVci, atmVcCrossConnectHighIfIndex, atmVcCrossConnectHighVpi, atmVcCrossConnectHighVci);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmVcCrossConnectEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -1932,7 +1932,7 @@ atm_mib_get_atmVcCrossConnectEntry(GNetSnmp *s, atm_mib_atmVcCrossConnectEntry_t
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;
@@ -1952,7 +1952,7 @@ atm_mib_set_atmVcCrossConnectEntry(GNetSnmp *s, atm_mib_atmVcCrossConnectEntry_t
     len = pack_atmVcCrossConnectEntry(base, atmVcCrossConnectEntry->atmVcCrossConnectIndex, atmVcCrossConnectEntry->atmVcCrossConnectLowIfIndex, atmVcCrossConnectEntry->atmVcCrossConnectLowVpi, atmVcCrossConnectEntry->atmVcCrossConnectLowVci, atmVcCrossConnectEntry->atmVcCrossConnectHighIfIndex, atmVcCrossConnectEntry->atmVcCrossConnectHighVpi, atmVcCrossConnectEntry->atmVcCrossConnectHighVci);
     if (len < 0) {
         g_warning("%s: invalid index values", "atmVcCrossConnectEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -2095,7 +2095,7 @@ atm_mib_get_aal5VccEntry(GNetSnmp *s, atm_mib_aal5VccEntry_t **aal5VccEntry, gin
     len = pack_aal5VccEntry(base, ifIndex, aal5VccVpi, aal5VccVci);
     if (len < 0) {
         g_warning("%s: invalid index values", "aal5VccEntry");
-        s->error_status = GNET_SNMP_ERR_INTERNAL;
+        s->error_status = GNET_SNMP_PDU_ERR_INTERNAL;
         return;
     }
 
@@ -2107,7 +2107,7 @@ atm_mib_get_aal5VccEntry(GNetSnmp *s, atm_mib_aal5VccEntry_t **aal5VccEntry, gin
     g_list_foreach(in, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(in);
     if (out) {
-        if (s->error_status != GNET_SNMP_ERR_NOERROR) {
+        if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
             g_list_foreach(out, (GFunc) gnet_snmp_varbind_delete, NULL);
             g_list_free(out);
             return;

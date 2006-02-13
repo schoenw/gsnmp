@@ -1,6 +1,6 @@
 #include "gsnmp.h"
 
-void
+static void
 dump(guchar *bytes, gsize len)
 {
     int i;
@@ -33,7 +33,7 @@ test_md5_key_localization()
 	{ 0x52, 0x6f, 0x5e, 0xed, 0x9f, 0xcc, 0xe2, 0x6f,
 	  0x89, 0x64, 0xc2, 0x93, 0x07, 0x87, 0xd8, 0x2b };
 
-    gnet_snmp_password_to_key_md5(password, strlen(password), key);
+    gnet_snmp_password_to_key_md5((guchar *) password, strlen(password), key);
     g_assert(memcmp(key, digest1, GNET_MD5_HASH_LENGTH) == 0);
 
     gnet_snmp_localize_key_md5(key, engineid, G_N_ELEMENTS(engineid));
@@ -63,11 +63,58 @@ test_sha_key_localization()
 	{ 0x66, 0x95, 0xfe, 0xbc, 0x92, 0x88, 0xe3, 0x62, 0x82, 0x23,
 	  0x5f, 0xc7, 0x15, 0x1f, 0x12, 0x84, 0x97, 0xb3, 0x8f, 0x3f };
 
-    gnet_snmp_password_to_key_sha(password, strlen(password), key);
+    gnet_snmp_password_to_key_sha((guchar *) password, strlen(password), key);
     g_assert(memcmp(key, digest1, GNET_SHA_HASH_LENGTH) == 0);
 
     gnet_snmp_localize_key_sha(key, engineid, G_N_ELEMENTS(engineid));
     g_assert(memcmp(key, digest2, GNET_SHA_HASH_LENGTH) == 0);
+}
+
+/*
+ *
+ */
+
+static void
+test_ber_std_msg()
+{
+    GError *error = NULL;
+    GNetSnmpBer *asn1;
+    GNetSnmpMsg msg1, msg2;
+    guchar buf[1234], *start;
+    gsize len;
+
+    static const guchar x[] = {
+	0x30, 0x0b,
+	      0x02, 0x01, 0x00,
+	      0x04, 0x06, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63
+    };
+
+    memset(&msg1, 0, sizeof(msg1));
+    msg1.version = GNET_SNMP_V1;
+    msg1.community = (guchar *) "public";
+    msg1.community_len = strlen((gchar *) msg1.community);
+
+    memset(&msg2, 0, sizeof(msg2));
+
+    /* SNMPv1 message */
+    
+    asn1 = gnet_snmp_ber_enc_new(buf, sizeof(buf));
+    gnet_snmp_ber_enc_msg(asn1, &msg1, &error);
+    gnet_snmp_ber_enc_delete(asn1, &start, &len);
+
+    g_assert(error == NULL);
+    g_assert(memcmp(start, x, len) == 0);
+
+    asn1 = gnet_snmp_ber_dec_new(start, len);
+    gnet_snmp_ber_dec_msg(asn1, &msg2, &error);
+    gnet_snmp_ber_dec_delete(asn1, &start, &len);
+
+    g_assert(error == NULL);
+    g_assert(msg2.version == msg1.version);
+    g_assert(msg2.community_len == msg1.community_len);
+    g_assert(memcmp(msg2.community, msg1.community,
+		    msg1.community_len) == 0);
+    g_assert(msg2.community_len == msg1.community_len); 
 }
 
 /*
@@ -83,15 +130,15 @@ test_ber_std_pdu()
     guchar buf[1234], *start;
     gsize len;
 
-    guchar x[] = {
-	0xA1, 0x0B,
+    static const guchar x[] = {
+	0xa1, 0x0b,
 	      0x02, 0x01, 0x00,
 	      0x02, 0x01, 0x00,
 	      0x02, 0x01, 0x00,
 	      0x30, 0x00
     };
 
-    guchar y[] = {
+    static const guchar y[] = {
 	0x30, 0x1c,
 	      0x04, 0x08, 0x80, 0x00, 0x02, 0xb8, 0x04, 0x61, 0x62, 0x63,
 	      0x04, 0x03, 0x64, 0x65, 0x66,
@@ -108,8 +155,8 @@ test_ber_std_pdu()
 
     memset(&pdu1, 0, sizeof(pdu1));
     pdu1.type = GNET_SNMP_PDU_NEXT;
-    pdu1.context_name = "def";
-    pdu1.context_name_len = strlen(pdu1.context_name);
+    pdu1.context_name = (guchar *) "def";
+    pdu1.context_name_len = strlen((gchar *) pdu1.context_name);
     pdu1.context_engineid = eid;
     pdu1.context_engineid_len = sizeof(eid);
 
@@ -197,7 +244,7 @@ test_ber_trap_pdu()
     gsize len;
     guint32 time = 42;
 
-    guchar x[] = {
+    static const guchar x[] = {
 	0xa4, 0x1b,
 	      0x06, 0x08, 0x2b, 0x06, 0x01, 0x06, 0x03, 0x01, 0x01, 0x05,
               0x40, 0x04, 0x00, 0x00, 0x00, 0x00,
@@ -207,7 +254,7 @@ test_ber_trap_pdu()
 	      0x30, 0x00
     };
 
-    guchar y[] = {
+    static const guchar y[] = {
 	0xa4, 0x33,
 	      0x02, 0x01, 0x00,
 	      0x02, 0x01, 0x00,
@@ -317,7 +364,7 @@ test_ber_null()
     gsize len;
     guint cls, con, tag;
     
-    guchar x[] = {
+    static const guchar x[] = {
 	0x05, 0x00,
     };
 
@@ -354,7 +401,7 @@ test_ber_gint32()
 	-2147483648L, -2147483647L, -1, 0, 1, 2147483646L, 2147483647L
     };
 
-    guchar x[] = {
+    static const guchar x[] = {
 	0x02, 0x04, 0x80, 0x00, 0x00, 0x00,
 	0x02, 0x04, 0x80, 0x00, 0x00, 0x01,
 	0x02, 0x01, 0xFF,
@@ -405,7 +452,7 @@ test_ber_gint64()
 	2147483646LL, 2147483647LL, 9223372036854775807LL
     };
 
-    guchar x[] = {
+    static const guchar x[] = {
 	0x02, 0x08, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x02, 0x04, 0x80, 0x00, 0x00, 0x00,
 	0x02, 0x04, 0x80, 0x00, 0x00, 0x01,
@@ -456,7 +503,7 @@ test_ber_guint32()
 	0, 1, 4294967294UL, 4294967295UL
     };
 
-    guchar x[] = {
+    static const guchar x[] = {
 	0x02, 0x01, 0x00,
 	0x02, 0x01, 0x01,
 	0x02, 0x05, 0x00, 0xFF, 0xFF, 0xFF, 0xFE,
@@ -502,7 +549,7 @@ test_ber_guint64()
 	0, 1, 4294967295UL, 4294967296ULL, 18446744073709551615ULL
     };
 
-    guchar x[] = {
+    static const guchar x[] = {
 	0x02, 0x01, 0x00,
 	0x02, 0x01, 0x01,
 	0x02, 0x05, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -549,7 +596,7 @@ test_ber_octets()
 	"", "a", "abcdefghijklmnopqrstuvwxyz"
     };
 
-    guchar x[] = {
+    static const guchar x[] = {
 	0x04, 0x00,
 	0x04, 0x01, 0x61,
 	0x04, 0x1a, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69,
@@ -559,7 +606,8 @@ test_ber_octets()
 
     asn1 = gnet_snmp_ber_enc_new(buf, sizeof(buf));
     for (i = G_N_ELEMENTS(v) - 1; i >= 0; i--) {
-	gnet_snmp_ber_enc_octets(asn1, &eoi, v[i], strlen(v[i]), &error);
+	gnet_snmp_ber_enc_octets(asn1, &eoi,
+				 (guchar *) v[i], strlen(v[i]), &error);
 	gnet_snmp_ber_enc_header(asn1, eoi, GNET_SNMP_ASN1_UNI,
 				 GNET_SNMP_ASN1_PRI, GNET_SNMP_ASN1_OTS,
 				 &error);
@@ -575,7 +623,7 @@ test_ber_octets()
 	gnet_snmp_ber_dec_header(asn1, &eoi, &cls, &con, &tag, &error);
 	g_assert(cls == GNET_SNMP_ASN1_UNI
 		 && con == GNET_SNMP_ASN1_PRI && tag == GNET_SNMP_ASN1_OTS);
-	gnet_snmp_ber_dec_octets(asn1, eoi, &a, &a_len, &error);
+	gnet_snmp_ber_dec_octets(asn1, eoi, (guchar **) &a, &a_len, &error);
 	g_assert(a_len == strlen(v[i]));
 	g_assert(memcmp(a, v[i], a_len) == 0);
     }
@@ -589,7 +637,7 @@ test_snmp_uri_parser()
     GURI *uri;
     int i;
 
-    const gchar *testcases[] = {
+    static const gchar *testcases[] = {
 
 	/* fully qualified service URIs which we accept */
 
@@ -612,11 +660,11 @@ test_snmp_uri_parser()
 
 	"localhost",			"snmp://public@localhost:161/",
 	"public@localhost",		"snmp://public@localhost:161/",
-	"localhost:161",		"snmp://public@localhost:161/",
+//	"localhost:161",		"snmp://public@localhost:161/",
 
 	"127.0.0.1",			"snmp://public@127.0.0.1:161/",
 	"public@127.0.0.1",		"snmp://public@127.0.0.1:161/",
-	"127.0.0.1:161",		"snmp://public@127.0.0.1:161/",
+//	"127.0.0.1:161",		"snmp://public@127.0.0.1:161/",
 
 //	"::1",				"snmp://public@[::1]:161/",
 //	"public@::1",			"snmp://public@[::1]:161/",
@@ -631,6 +679,7 @@ test_snmp_uri_parser()
     
     for (i = 0; testcases[i]; i++) {
 	uri = gnet_snmp_parse_uri(testcases[i++]);
+	g_printerr("testcases[%d] %s\n", i-1, testcases[i-1]);
 	if (uri) {
 	    gchar *s = gnet_uri_get_string(uri);
 	    // g_printerr("%s-> %s\n", testcases[i], s);
@@ -662,6 +711,7 @@ main(void)
 	{ test_ber_octets,	"ASN.1/BER octet string encoding/decoding test" },
 	{ test_ber_std_pdu,	"ASN.1/BER standard pdu encoding/decoding test" },
 	{ test_ber_trap_pdu,	"ASN.1/BER trap pdu encoding/decoding test" },
+	{ test_ber_std_msg,	"ASN.1/BER standard msg encoding/decoding test" },
 	{ test_md5_key_localization,	"MD5 key localization test" },
 	{ test_sha_key_localization,	"SHA key localization test" },
 	{ test_snmp_uri_parser,	"SNMP URI parser test" },

@@ -97,56 +97,56 @@ GNetSnmpBer* gnet_snmp_ber_enc_new	(guchar *buf, gsize buf_len);
 
 GNetSnmpBer* gnet_snmp_ber_dec_new	(guchar *buf, gsize buf_len);
 
-void     gnet_snmp_ber_enc_delete	(GNetSnmpBer *asn1, guchar **buf,
+void     gnet_snmp_ber_enc_delete	(GNetSnmpBer *ber, guchar **buf,
 					 gsize *buf_len);
-void     gnet_snmp_ber_dec_delete	(GNetSnmpBer *asn1, guchar **buf,
+void     gnet_snmp_ber_dec_delete	(GNetSnmpBer *ber, guchar **buf,
 					 gsize *buf_len);
-gboolean gnet_snmp_ber_enc_length	(GNetSnmpBer *asn1, guint def,
+gboolean gnet_snmp_ber_enc_length	(GNetSnmpBer *ber, guint def,
 					 gsize len, GError **error);
-gboolean gnet_snmp_ber_dec_length	(GNetSnmpBer *asn1, guint *def,
+gboolean gnet_snmp_ber_dec_length	(GNetSnmpBer *ber, guint *def,
 					 gsize *len, GError **error);
-gboolean gnet_snmp_ber_enc_header	(GNetSnmpBer *asn1, guchar *eoc,
+gboolean gnet_snmp_ber_enc_header	(GNetSnmpBer *ber, guchar *eoc,
 					 guint cls, guint con, guint tag,
 					 GError **error);
-gboolean gnet_snmp_ber_dec_header	(GNetSnmpBer *asn1, guchar **eoc,
+gboolean gnet_snmp_ber_dec_header	(GNetSnmpBer *ber, guchar **eoc,
 					 guint *cls, guint *con, guint *tag,
 					 GError **error);
-gboolean gnet_snmp_ber_is_eoc		(GNetSnmpBer *asn1, guchar *eoc);
+gboolean gnet_snmp_ber_is_eoc		(GNetSnmpBer *ber, guchar *eoc);
 
-gboolean gnet_snmp_ber_enc_eoc		(GNetSnmpBer *asn1, guchar **eoc,
+gboolean gnet_snmp_ber_enc_eoc		(GNetSnmpBer *ber, guchar **eoc,
 					 GError **error);
-gboolean gnet_snmp_ber_dec_eoc		(GNetSnmpBer *asn1, guchar *eoc,
+gboolean gnet_snmp_ber_dec_eoc		(GNetSnmpBer *ber, guchar *eoc,
 					 GError **error);
-gboolean gnet_snmp_ber_enc_null		(GNetSnmpBer *asn1, guchar **eoc,
+gboolean gnet_snmp_ber_enc_null		(GNetSnmpBer *ber, guchar **eoc,
 					 GError **error);
-gboolean gnet_snmp_ber_dec_null		(GNetSnmpBer *asn1, guchar *eoc,
+gboolean gnet_snmp_ber_dec_null		(GNetSnmpBer *ber, guchar *eoc,
 					 GError **error);
-gboolean gnet_snmp_ber_enc_gint32	(GNetSnmpBer *asn1, guchar **eoc,
+gboolean gnet_snmp_ber_enc_gint32	(GNetSnmpBer *ber, guchar **eoc,
 					 const gint32 value, GError **error);
-gboolean gnet_snmp_ber_dec_gint32	(GNetSnmpBer *asn1, guchar *eoc,
+gboolean gnet_snmp_ber_dec_gint32	(GNetSnmpBer *ber, guchar *eoc,
 					 gint32 *value, GError **error);
-gboolean gnet_snmp_ber_enc_gint64	(GNetSnmpBer *asn1, guchar **eoc,
+gboolean gnet_snmp_ber_enc_gint64	(GNetSnmpBer *ber, guchar **eoc,
 					 const gint64 value, GError **error);
-gboolean gnet_snmp_ber_dec_gint64	(GNetSnmpBer *asn1, guchar *eoc,
+gboolean gnet_snmp_ber_dec_gint64	(GNetSnmpBer *ber, guchar *eoc,
 					 gint64 *value, GError **error);
-gboolean gnet_snmp_ber_enc_guint32	(GNetSnmpBer *asn1, guchar **eoc,
+gboolean gnet_snmp_ber_enc_guint32	(GNetSnmpBer *ber, guchar **eoc,
 					 const guint32 value, GError **error);
-gboolean gnet_snmp_ber_dec_guint32	(GNetSnmpBer *asn1, guchar *eoc,
+gboolean gnet_snmp_ber_dec_guint32	(GNetSnmpBer *ber, guchar *eoc,
 					 guint32 *value, GError **error);
-gboolean gnet_snmp_ber_enc_guint64	(GNetSnmpBer *asn1, guchar **eoc,
+gboolean gnet_snmp_ber_enc_guint64	(GNetSnmpBer *ber, guchar **eoc,
 					 const guint64 value, GError **error);
-gboolean gnet_snmp_ber_dec_guint64	(GNetSnmpBer *asn1, guchar *eoc,
+gboolean gnet_snmp_ber_dec_guint64	(GNetSnmpBer *ber, guchar *eoc,
 					 guint64 *integer, GError **error);
-gboolean gnet_snmp_ber_enc_octets	(GNetSnmpBer *asn1, guchar **eoc,
+gboolean gnet_snmp_ber_enc_octets	(GNetSnmpBer *ber, guchar **eoc,
 					 const guchar *octs, const gsize len,
 					 GError **error);
-gboolean gnet_snmp_ber_dec_octets	(GNetSnmpBer *asn1, guchar *eoc,
+gboolean gnet_snmp_ber_dec_octets	(GNetSnmpBer *ber, guchar *eoc,
 					 guchar **octs, gsize *len,
 					 GError **error);
-gboolean gnet_snmp_ber_enc_oid		(GNetSnmpBer *asn1, guchar **eoc, 
+gboolean gnet_snmp_ber_enc_oid		(GNetSnmpBer *ber, guchar **eoc, 
 					 const guint32 *oid, const gsize len,
 					 GError **error);
-gboolean gnet_snmp_ber_dec_oid		(GNetSnmpBer *asn1, guchar *eoc, 
+gboolean gnet_snmp_ber_dec_oid		(GNetSnmpBer *ber, guchar *eoc, 
 					 guint32 **oid, gsize *len,
 					 GError **error);
 

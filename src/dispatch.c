@@ -29,8 +29,119 @@
  * to the appropriate transport (e.g. IPv4 or IPv6 or IPX) by using the
  * message processing compatible with the given PDU version (V1, V2C,
  * or V3). Applications will prefer to use the sync or async event loop
- * API presented by the g_session layer.
+ * API presented by the gnet_snmp_session layer.
  */
+
+/**
+ *
+ */
+
+gboolean
+gnet_snmp_dispatcher_send_pdu(GNetSnmpTDomain tDomain,
+			      GInetAddr *tAddress,
+			      GNetSnmpVersion version,
+			      GNetSnmpSecModel sec_model,
+			      GString *sec_name,
+			      GNetSnmpSecLevel sec_level,
+			      GNetSnmpPdu *pdu,
+			      gboolean expect_response,
+			      GError **error)
+{
+    GNetSnmpBer *ber;
+    GNetSnmpMsg _msg, *msg = &_msg;
+    guchar buffer[65536], *start;
+    gsize len;
+    gchar *community = NULL;
+    gsize community_len = 0;
+
+    /* construct community strings of the form 'name@context' for
+       snmpv1/snmpv2c messages */
+
+    if (pdu->context_name && pdu->context_name_len) {
+	community = g_strdup_printf("%s@%s",
+				    sec_name->str, pdu->context_name);
+	community_len = strlen(community);
+    } else {
+	community = g_strdup(sec_name->str);
+	community_len = strlen(community);
+    }
+
+    switch (version) {
+    case GNET_SNMP_V1:
+	g_assert(sec_model == GNET_SNMP_SECMODEL_SNMPV1
+		|| sec_model == GNET_SNMP_SECMODEL_ANY);
+	g_assert(sec_level == GNET_SNMP_SECLEVEL_NANP);
+	msg->version = version;
+	msg->community = (guchar *) community;
+	msg->community_len = community_len;
+	msg->data = (gpointer) pdu;
+	break;
+    case GNET_SNMP_V2C:
+	g_assert(sec_model == GNET_SNMP_SECMODEL_SNMPV2C
+		 || sec_model == GNET_SNMP_SECMODEL_ANY);
+	g_assert(sec_level == GNET_SNMP_SECLEVEL_NANP);
+	msg->version = version;
+	msg->community = (guchar *) community;
+	msg->community_len = community_len;
+	msg->data = (gpointer) pdu;
+	break;
+    case GNET_SNMP_V3:
+	/* xxx */
+	break;
+    default:
+	g_assert_not_reached();
+    }
+
+    ber = gnet_snmp_ber_enc_new(buffer, sizeof(buffer));
+    if (!gnet_snmp_ber_enc_msg(ber, msg, error)) {
+	if (community) g_free(community);
+	gnet_snmp_ber_enc_delete(ber, NULL, NULL);
+	return FALSE;
+    }
+    if (community) g_free(community);
+    gnet_snmp_ber_enc_delete(ber, &start, &len);
+    
+    if (!gnet_snmp_transport_send(tDomain, tAddress, start, len, error))
+	return FALSE;
+
+    return TRUE;
+}
+
+/**
+ *
+ */
+
+gboolean
+gnet_snmp_dispatcher_recv_msg(GNetSnmpTDomain tDomain,
+			      GInetAddr *tAddress,
+			      guchar *buffer,
+			      gsize buffer_len,
+			      GError **error)
+{
+    GNetSnmpBer *ber;
+    GNetSnmpMsg _msg, *msg = &_msg;
+
+    ber = gnet_snmp_ber_dec_new(buffer, buffer_len);
+    if (! ber) {
+	return FALSE;
+    }
+    if (! gnet_snmp_ber_dec_msg(ber, msg, error)) {
+	gnet_snmp_ber_dec_delete(ber, NULL, NULL);
+	return FALSE;
+    }
+    gnet_snmp_ber_dec_delete(ber, NULL, NULL);
+
+    if (msg->data) {
+	GNetSnmpPdu *pdu = (GNetSnmpPdu *) msg->data;
+	if (pdu->type == GNET_SNMP_PDU_RESPONSE) {
+	    g_session_response_pdu(msg);
+	} else {
+	    /* xxx no command responder support yet */
+	}
+    }
+   
+    return TRUE;
+}
 
 /* RFC2271 defines some dispatcher primitives as standard SNMPv3 API.
  * These names do not match GNU conventions. RFC2272 defines what exactly
@@ -113,20 +224,6 @@
  * )
  */
 
-/* FIXME: Should be moved into a transport module with an init function
- *        For this it would be nice, if glib already had the event loop :)
- */
-
-/* static id field for SNMP id */
-
-static guint32 id = 1;
-
-/* static registration hash tables. */
-
-static GHashTable *message_models        = NULL;
-static GHashTable *security_models       = NULL;
-static GHashTable *access_models         = NULL;
-
 /* 4.1.1.  Sending a Request or Notification 
  *
  * The following procedures are followed by the Dispatcher when an
@@ -197,6 +294,7 @@ static GHashTable *access_models         = NULL;
  * Outgoing Message Processing is complete.
  */
 
+#if 0
 int 
 sendPdu(GNetSnmpTDomain transportDomain, GInetAddr *transportAddress,
         guint messageProcessingModel, guint securityModel,
@@ -256,6 +354,7 @@ sendPdu(GNetSnmpTDomain transportDomain, GInetAddr *transportAddress,
     g_free(outgoingMessage);
     return sendPduHandle;
 }
+#endif
 
 /* 4.1.2.  Sending a Response to the Network
  *
@@ -315,6 +414,7 @@ sendPdu(GNetSnmpTDomain transportDomain, GInetAddr *transportAddress,
  * Message Processing is complete.
  */
 
+#if 0
 gboolean
 returnResponsePdu(guint messageProcessingModel, guint securityModel,
                   GString *securityName, int securityLevel, 
@@ -353,7 +453,9 @@ returnResponsePdu(guint messageProcessingModel, guint securityModel,
   g_free(outgoingMessage);
   return TRUE;
 }
+#endif
 
+#if 0
 gboolean
 g_register_message(guint model_nr, struct g_message *msg)
 {
@@ -377,6 +479,7 @@ g_register_security(guint model_nr, struct g_security *sec)
   g_hash_table_insert(security_models, ptr, sec);
   return TRUE;
 }
+#endif
 
 /* 4.2.1.  Message Dispatching of received SNMP Messages
  *
@@ -431,6 +534,7 @@ g_register_security(guint model_nr, struct g_security *sec)
  *    Dispatching for Incoming Messages.
  */
 
+#if 0
 void
 g_receive_message(GNetSnmpTDomain transportDomain, GInetAddr *transportAddress,
                   gpointer wholeMsg, guint wholeMsgLength)
@@ -660,6 +764,7 @@ g_receive_message(GNetSnmpTDomain transportDomain, GInetAddr *transportAddress,
       */;
     }
 }
+#endif
 
 /* 4.3.  Application Registration for Handling PDU types
  *
@@ -718,27 +823,5 @@ g_receive_message(GNetSnmpTDomain transportDomain, GInetAddr *transportAddress,
  *
  *    If no such registration exists, then the request is ignored.
  */
-
-gboolean
-gnet_snmp_init(gboolean dobind)
-{
-    message_models   = g_hash_table_new (g_int_hash, g_int_equal);
-    security_models  = g_hash_table_new (g_int_hash, g_int_equal);
-    access_models    = g_hash_table_new (g_int_hash, g_int_equal);
-    
-    /* Init all required models by RFC 2571. Any private model should
-     * be initialized after calling snmp_init().  */
-
-    if (!g_message_init())
-	return FALSE;
-    
-#if 0
-    g_security_init() &&
-	g_access_init();
-#endif
-    
-    g_timeout_add(100, g_snmp_timeout_cb, NULL);
-    return TRUE;
-}
 
 /* EOF */
