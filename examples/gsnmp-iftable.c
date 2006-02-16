@@ -97,7 +97,6 @@ main(int argc, char **argv)
 		       : "creating SNMP session failed");
 	    return 1;
 	}
-	gnet_snmp_set_version(s, GNET_SNMP_V1);
 
 	for (r = 0; r < repeats; r++) {
 	    show_iftable(s);

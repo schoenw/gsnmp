@@ -57,6 +57,7 @@ main(int argc, char **argv)
 
     context = g_option_context_new("uri - ping snmp agents");
     g_option_context_add_main_entries(context, entries, NULL);
+    g_option_context_add_group (context, gnet_snmp_get_option_group());    
     if (! g_option_context_parse(context, &argc, &argv, &error)) {
 	g_printerr("%s: %s\n", g_get_prgname(),
 		   (error && error->message) ? error->message

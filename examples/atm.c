@@ -45,7 +45,6 @@ main()
 	g_printerr("%s: unable to create session\n", progname);
 	exit(1);
     }
-    gnet_snmp_set_version(s, GNET_SNMP_V1);
 
     atm_mib_get_atmMIBObjects(s, &o, ATM_MIB_ATMTRAFFICDESCRPARAMINDEXNEXT);
     if (s->error_status || !o || !o->atmTrafficDescrParamIndexNext) return 2;
