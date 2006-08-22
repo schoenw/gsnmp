@@ -256,7 +256,7 @@ gnet_snmp_attr_assign(GList *vbl,
 		     range += 2;
 		 }
 		 if (range[0] == 0 && range[1] == 0) {
-		     g_warning("%s: value not within range contraints",
+		     g_warning("%s: value not within range constraints",
 			       attributes[i].label);
 		     gp = NULL;
 		 }
@@ -276,7 +276,7 @@ gnet_snmp_attr_assign(GList *vbl,
 		     range += 2;
 		 }
 		 if (range[0] == 0 && range[1] == 0) {
-		     g_warning("%s: value not within range contraints",
+		     g_warning("%s: value not within range constraints",
 			       attributes[i].label);
 		     gp = NULL;
 		 }
@@ -294,7 +294,7 @@ gnet_snmp_attr_assign(GList *vbl,
 		     size += 2;
 		 }
 		 if (size[0] == 0 && size[1] == 0) {
-		     g_warning("%s: value not within size contraints",
+		     g_warning("%s: value not within size constraints",
 			       attributes[i].label);
 		     gp = NULL;
 		 }
@@ -398,7 +398,9 @@ gnet_snmp_attr_set(const GNetSnmp *s, GList **vbl,
 
 
 gint
-gnet_snmp_compare_oids(guint32 *oid1, gsize len1, guint32 *oid2, gsize len2)
+gnet_snmp_compare_oids(const guint32 *oid1, const gsize len1,
+		       const guint32 *oid2, const gsize len2)
+
 {
     int i, j, len;
 
@@ -495,7 +497,7 @@ gnet_snmp_parse_path(const gchar *path,
 		     GNetSnmpUriType *type,
 		     GError **error)
 {
-    gint oid_len, state;
+    gint oid_len = 0, state;
     gchar *s, *oids;
     GScanner *sc;
     GTokenType token;
@@ -722,15 +724,31 @@ gnet_snmp_parse_path(const gchar *path,
  * #g_option_context_parse() to parse your commandline arguments.
  */
 
+static gboolean
+opt_version_cb(const char *key, const char *value, gpointer user_data)
+{
+    gint32 number;
+    
+    if (! gnet_snmp_enum_get_number(gnet_snmp_enum_version_table,
+				    value, &number)) {
+	return FALSE;
+    }
+
+    gnet_snmp_version = number;
+    return TRUE;
+}
+
 static GOptionEntry gsnmp_args[] = {
-    { "gsnmp-debug", 0, 0, G_OPTION_ARG_NONE, NULL,
-      "Set the debug level to D", "D" },
-    { "gsnmp-timeout", 0, 0, G_OPTION_ARG_NONE, NULL,
+    { "snmp-debug", 0, 0, G_OPTION_ARG_INT, &gnet_snmp_debug_flags,
+      "Set the default debug level to D", "D" },
+    { "snmp-timeout", 0, 0, G_OPTION_ARG_INT, &gnet_snmp_timeout,
       "Set the default timeout to T ms", "T" },
-    { "gsnmp-retries", 0, 0, G_OPTION_ARG_NONE, NULL,
+    { "snmp-retries", 0, 0, G_OPTION_ARG_INT, &gnet_snmp_retries,
       "Set the default retries to N", "N" },
-    { "gsnmp-version", 0, 0, G_OPTION_ARG_NONE, NULL,
+    { "snmp-version", 0, 0, G_OPTION_ARG_CALLBACK, opt_version_cb,
       "Set the default SNMP version to V", "V" },
+    { "snmp-transport", 0, 0, G_OPTION_ARG_NONE, NULL,
+      "Set the default SNMP transport domain to T", "T" },
     { NULL },
 };
 
@@ -739,9 +757,9 @@ gnet_snmp_get_option_group()
 {
     GOptionGroup *group;
 
-    group = g_option_group_new("gsnmp",
-			       "Gnet SNMP Options:",
-			       "Show Gnet SNMP Options",
+    group = g_option_group_new("snmp",
+			       "SNMP Options:",
+			       "Show SNMP Options",
 			       NULL, g_free);
     g_option_group_add_entries(group, gsnmp_args);
     return group;

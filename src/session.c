@@ -32,6 +32,10 @@
 static GSList  *request_queue = NULL;   /* queue of active requests */
 static int initialized = 0;
 
+guint           gnet_snmp_retries = GNET_SNMP_DEFAULT_RETRIES;
+guint           gnet_snmp_timeout = GNET_SNMP_DEFAULT_TIMEOUT;
+GNetSnmpVersion gnet_snmp_version = GNET_SNMP_V2C;
+
 static int g_snmp_timeout_cb(gpointer data);
 
 GQuark
@@ -60,9 +64,9 @@ gnet_snmp_new()
     session = g_malloc0(sizeof(GNetSnmp));
     session->tdomain = GNET_SNMP_TDOMAIN_NONE;
     session->taddress = NULL;
-    session->retries = GNET_SNMP_DEFAULT_RETRIES;
-    session->timeout = GNET_SNMP_DEFAULT_TIMEOUT;
-    session->version = GNET_SNMP_V2C;
+    session->retries = gnet_snmp_retries;
+    session->timeout = gnet_snmp_timeout;
+    session->version = gnet_snmp_version;
     session->sec_level = GNET_SNMP_SECLEVEL_NANP;
     session->sec_model = GNET_SNMP_SECMODEL_ANY;
     session->sec_name = g_string_new(NULL);

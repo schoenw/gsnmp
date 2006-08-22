@@ -182,8 +182,19 @@ gnet_snmp_ber_dec_msg(GNetSnmpBer *ber, GNetSnmpMsg *msg,
     }
 
     if (! gnet_snmp_ber_is_eoc(ber, eoc)) {
+#if 0
 	GNetSnmpPdu _pdu;
 	GNetSnmpPdu *pdu = msg->data ? (GNetSnmpPdu *) msg->data : &_pdu;
+#else
+	GNetSnmpPdu *pdu;
+
+	if (msg->data) {
+	    pdu = msg->data;
+	} else {
+	    pdu = g_malloc(sizeof(GNetSnmpPdu));
+	    msg->data = pdu;
+	}
+#endif
 	switch (msg->version) {
 	case GNET_SNMP_V1:
 	    if (!gnet_snmp_ber_dec_pdu_v1(ber, pdu, error)) {

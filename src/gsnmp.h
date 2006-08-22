@@ -46,8 +46,6 @@ typedef enum
     GNET_SNMP_DEBUG_MASK	= 0x1f
 } GNetSnmpDebugFlags;
 
-extern		GNetSnmpDebugFlags gnet_snmp_debug_flags;
-
 #include "ber.h"
 #include "pdu.h"
 #include "transport.h"
@@ -56,6 +54,11 @@ extern		GNetSnmpDebugFlags gnet_snmp_debug_flags;
 #include "session.h"
 #include "dispatch.h"
 #include "utils.h"
+
+extern		GNetSnmpDebugFlags gnet_snmp_debug_flags;
+extern          guint gnet_snmp_retries;
+extern          guint gnet_snmp_timeout;
+extern          GNetSnmpVersion gnet_snmp_version;
 
 G_END_DECLS
 

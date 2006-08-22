@@ -113,7 +113,7 @@ typedef enum {
     GNET_SNMP_PDU_SET		= 3,
     GNET_SNMP_PDU_TRAP		= 4,
     GNET_SNMP_PDU_BULK		= 5,
-    GNET_SNMP_PDU_INFORM	= 6,
+    GNET_SNMP_PDU_INFORM	= 6
 } GNetSnmpPduType;
 
 /*

@@ -36,8 +36,8 @@ GOptionGroup *gnet_snmp_get_option_group ();
  * less than, to match or be greater than oid2.
  */
 
-gint	gnet_snmp_compare_oids	(guint32 *oid1, gsize len1,
-				 guint32 *oid2, gsize len2);
+gint	gnet_snmp_compare_oids	(const guint32 *oid1, const gsize len1,
+				 const guint32 *oid2, const gsize len2);
 
 /*
  * Parse a string into an SNMP URI. This function also handles
@@ -142,7 +142,7 @@ typedef struct {
     const GNetSnmpVarBindType  type;	/* SNMP type of the value */
     const gint              tag;	/* internal identification tag */
     const gchar            *label;	/* label (used for error reports) */
-    const gpointer	    constraints;/* range or size contraints */
+    const gpointer	    constraints;/* range or size constraints */
     const gint              val_offset;	/* offset for the value pointer */
     const gint		    len_offset;	/* offset for the length pointer */
     const GNetSnmpAttrFlags flags;	/* various flags, see above */

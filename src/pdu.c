@@ -23,7 +23,7 @@
  */
 
 #include <memory.h>
-#include "pdu.h"
+#include "gsnmp.h"
 
 /*
  * Constants used internally for encoding/decoding traps.
@@ -238,7 +238,7 @@ gboolean
 gnet_snmp_ber_enc_varbind(GNetSnmpBer *ber, GNetSnmpVarBind *vb,
 			  GError **error)
 {
-    guint   cls, tag;
+    guint   cls = 0, tag = 0;
     guchar *eoc, *end;
 
     if (!gnet_snmp_ber_enc_eoc(ber, &eoc, error))
@@ -454,7 +454,8 @@ gnet_snmp_ber_dec_varbind(GNetSnmpBer *ber, GNetSnmpVarBind **vb,
 		g_set_error(error,
 			    GNET_SNMP_BER_ERROR,
 			    GNET_SNMP_BER_ERROR_DEC_BADVALUE,
-			    "varbind value has unexpected length %d", len); 
+			    "varbind value has unexpected length %d",
+			    (int) len); 
 	    }
             g_free(p);
             g_free(id);

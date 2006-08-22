@@ -121,6 +121,8 @@ gnet_snmp_dispatcher_recv_msg(GNetSnmpTDomain tDomain,
     GNetSnmpBer *ber;
     GNetSnmpMsg _msg, *msg = &_msg;
 
+    msg->data = NULL;
+
     ber = gnet_snmp_ber_dec_new(buffer, buffer_len);
     if (! ber) {
 	return FALSE;
