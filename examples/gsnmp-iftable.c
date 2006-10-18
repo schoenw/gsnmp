@@ -62,7 +62,6 @@ main(int argc, char **argv)
 {
     gint i, r;
     static gint repeats = 1;
-    static gboolean dflag = 0;
     GNetSnmp *s;
     GError *error = NULL;
     GOptionContext *context;
@@ -70,8 +69,6 @@ main(int argc, char **argv)
     static GOptionEntry entries[] = {
 	{ "repeats", 'r', 0, G_OPTION_ARG_INT, &repeats,
 	  "Executes N times", "N" },
-	{ "debug", 'd', 0, G_OPTION_ARG_NONE, &dflag,
-	  "Generate debug messages", NULL },
 	{ NULL }
     };
 
@@ -83,10 +80,6 @@ main(int argc, char **argv)
 		   (error && error->message) ? error->message
 		   : "option parsing failed");
 	return 1;
-    }
-
-    if (dflag) {
-	gnet_snmp_debug_flags = GNET_SNMP_DEBUG_ALL;
     }
 
     for (i = 1; i < argc; i++) {
