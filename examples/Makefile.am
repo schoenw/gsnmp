@@ -1,5 +1,7 @@
 INCLUDES		= $(GNET_CFLAGS) -I$(top_srcdir)/src
 
+EXTRA_DIST		= $(man_MANS)
+
 bin_PROGRAMS		= gsnmp-get
 
 noinst_PROGRAMS		= gsnmp-ping gsnmp-stub-ping \
