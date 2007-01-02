@@ -1,6 +1,6 @@
 INCLUDES		= $(GNET_CFLAGS) -I$(top_builddir)/src
 
-bin_PROGRAMS		= gsnmp-test
+noinst_PROGRAMS		= gsnmp-test
 
 gsnmp_test_SOURCES	= gsnmp-test.c
 gsnmp_test_LDADD	= $(top_builddir)/src/libgsnmp.la \

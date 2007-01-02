@@ -1,7 +1,11 @@
 INCLUDES		= $(GNET_CFLAGS) -I$(top_builddir)/src
 
-bin_PROGRAMS		= gsnmp-ping gsnmp-stub-ping gsnmp-iftable \
-			  gsnmp-walk gsnmp-get atm
+bin_PROGRAMS		= gsnmp-get
+
+noinst_PROGRAMS		= gsnmp-ping gsnmp-stub-ping \
+			  gsnmp-iftable gsnmp-walk atm
+
+man_MANS                = gsnmp-get.1
 
 gsnmp_ping_SOURCES	= gsnmp-ping.c
 gsnmp_ping_LDADD	= $(top_builddir)/src/libgsnmp.la \

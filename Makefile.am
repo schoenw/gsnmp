@@ -14,3 +14,6 @@ m4data_DATA		= gsnmp.m4
 pkgconfigdir		= $(libdir)/pkgconfig
 pkgconfig_DATA		= gsnmp.pc
 $(pkgconfig_DATA):	config.status
+
+ChangeLog:
+	svn2cl  --reparagraph --authors=AUTHORS.xml
