@@ -383,7 +383,11 @@ gnet_snmp_attr_set(const GNetSnmp *s, GList **vbl,
 	}
 	gp = G_STRUCT_MEMBER_P(p, attributes[i].val_offset);
 	if (attributes[i].len_offset) {
-	    lp = (guint16 *) G_STRUCT_MEMBER_P(p, attributes[i].len_offset);
+            if (attributes[i].flags & GSNMP_ATTR_FLAG_FIXED_LENGTH) {
+                lp = (guint16 *) &attributes[i].len_offset;
+	    } else {
+		lp = (guint16 *) G_STRUCT_MEMBER_P(p, attributes[i].len_offset);
+	    }
 	} else {
 	    lp = 0;
 	}
