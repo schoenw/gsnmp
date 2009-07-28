@@ -758,7 +758,7 @@ static GOptionEntry gsnmp_args[] = {
     { "snmp-retries", 0, 0, G_OPTION_ARG_INT, &gnet_snmp_retries,
       "Set the default retries to N", "N" },
     { "snmp-version", 0, 0, G_OPTION_ARG_CALLBACK, opt_version_cb,
-      "Set the default SNMP version to V", "V" },
+      "Set the default SNMP version to V (default SNMPv2c)", "V" },
     { "snmp-transport", 0, 0, G_OPTION_ARG_NONE, NULL,
       "Set the default SNMP transport domain to T", "T" },
     { NULL },

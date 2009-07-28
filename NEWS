@@ -1,12 +1,13 @@
 Changes in gsnmp 0.3.0:
 
 - support of Unix domain sockets
-- cleanup of the library, especially the handling of transport addresses
+- improved handling of transport addresses
+- error reporting via the GError mechanism
 
 Changes in gsnmp 0.2.0:
 
 - support of RFC 4088 style SNMP URIs
-- cleanup of the library, especially the lower layers of the stack
+- cleanup of the library of the lower layers of the stack
 
 Overview of gsnmp 0.1.0:
 
