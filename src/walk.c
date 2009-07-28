@@ -153,7 +153,7 @@ g_snmp_walk_done_callback(GNetSnmp *snmp,
 	walk->cb_row(snmp, objs, walk->data);
     }
 
-    walk->request = gnet_snmp_async_getnext(snmp, objs);
+    walk->request = gnet_snmp_async_getnext(snmp, objs, NULL);
 
     return TRUE;
 }  
@@ -231,10 +231,10 @@ gnet_snmp_walk_delete(GNetSnmpWalk *walk)
 
 
 void
-gnet_snmp_async_walk(GNetSnmpWalk *walk)
+gnet_snmp_async_walk(GNetSnmpWalk *walk, GError **error)
 {
     walk->request = gnet_snmp_async_getnext(walk->snmp,
-					    walk->orig_objs);
+					    walk->orig_objs, error);
 }
 
 
@@ -276,14 +276,17 @@ cb_row(GNetSnmp *snmp, GList *vbl, gpointer *data)
 
 
 GList*
-gnet_snmp_sync_walk(GNetSnmp *s, GList *in)
+gnet_snmp_sync_walk(GNetSnmp *s, GList *in, GError **error)
 {
     GNetSnmpWalk *walk;
     GList *walklist = NULL;
 
     walk = gnet_snmp_walk_new(s, in, cb_error, cb_row, cb_finish, &walklist);
 
-    gnet_snmp_async_walk(walk);
+    gnet_snmp_async_walk(walk, error);
+    if (error && *error) {
+	return NULL;
+    }
 
     loop = g_main_new(TRUE);
     while (loop && g_main_is_running(loop)) {

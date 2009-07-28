@@ -63,8 +63,7 @@ gboolean gnet_snmp_ber_dec_msg	(GNetSnmpBer *ber, GNetSnmpMsg *msg,
 struct g_message
   {
      gboolean (*prepareOutgoingMessage) (
-                         GNetSnmpTDomain transportDomain,
-                         GInetAddr *transportAddress,
+                         GNetSnmpTAddress *transportAddress,
                          guint messageProcessingModel, 
                          guint securityModel,
                          GString *securityName, 
@@ -75,8 +74,7 @@ struct g_message
                          GNetSnmpPdu *PDU,
                          gboolean expectResponse, 
                          int sendPduHandle,
-                         GNetSnmpTDomain *outTransportDomain,
-                         GInetAddr **outTransportAddress,
+                         GNetSnmpTAddress **outTransportAddress,
                          gpointer *outgoingMessage,
                          gsize *outgoingMessageLength,
 			 GError **error);
@@ -92,13 +90,11 @@ struct g_message
                          guint maxSizeResponseScopedPDU,
                          gpointer stateReference, 
                          guint statusInformation,
-                         GNetSnmpTDomain *outTransportDomain,
-                         GInetAddr **outTransportAddress,
+                         GNetSnmpTAddress **outTransportAddress,
                          gpointer *outgoingMessage,
                          gsize *outgoingMessageLength);
      gboolean (*prepareDataElements) (
-                         GNetSnmpTDomain transportDomain,
-                         GInetAddr *transportAddress,
+                         GNetSnmpTAddress *transportAddress,
                          gpointer wholeMsg, 
                          gsize wholeMsgLength,
                          guint *messageProcessingModel, 
@@ -119,6 +115,5 @@ struct g_message
                          gpointer stateReference);
   };
 
-gboolean g_message_init(void);
 
 #endif /* __GNET_SNMP_MSG_H__ */

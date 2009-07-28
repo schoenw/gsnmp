@@ -25,8 +25,7 @@
 
 #include "gsnmp.h"
 
-gboolean gnet_snmp_dispatcher_send_pdu	(GNetSnmpTDomain tDomain,
-					 GInetAddr *tAddress,
+gboolean gnet_snmp_dispatcher_send_pdu	(GNetSnmpTAddress *tAddress,
 					 GNetSnmpVersion version,
 					 GNetSnmpSecModel sec_model,
 					 GString *sec_name,
@@ -35,8 +34,7 @@ gboolean gnet_snmp_dispatcher_send_pdu	(GNetSnmpTDomain tDomain,
 					 gboolean expect_response,
 					 GError **error);
 
-gboolean gnet_snmp_dispatcher_recv_msg	(GNetSnmpTDomain tDomain,
-					 GInetAddr *tAddress,
+gboolean gnet_snmp_dispatcher_recv_msg	(GNetSnmpTAddress *tAddress,
 					 guchar *msg,
 					 gsize msg_len,
 					 GError **error);
@@ -51,7 +49,7 @@ gboolean gnet_snmp_dispatcher_recv_msg	(GNetSnmpTDomain tDomain,
 
 typedef void (*GXINITCB) (guint r_socket, void (*receiveMessage) ());
 
-int sendPdu(GNetSnmpTDomain transportDomain, GInetAddr *transportAddress,
+int sendPdu(GNetSnmpTAddress *transportAddress,
             guint messageProcessingModel, guint securityModel,
             GString *securityName, int securityLevel,
             GString *contextEngineID, GString *contextName,
@@ -64,7 +62,7 @@ gboolean returnResponsePdu(guint messageProcessingModel, guint securityModel,
             guint pduVersion, GNetSnmpPdu *PDU, int maxSizeResponseScopedPDU,
             gpointer stateReference, int statusInformation, GError **error);
 
-void g_receive_message(GNetSnmpTDomain transportDomain, GInetAddr *transportAddress,
+void g_receive_message(GNetSnmpTAddress *transportAddress,
             gpointer wholeMsg, guint wholeMsgLength);
 
 gboolean g_register_message   (guint model_nr, struct g_message *msg);

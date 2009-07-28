@@ -1,8 +1,9 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(src/gsnmp.h)
-dnl Every other copy of the package version number gets its value from here
-AM_INIT_AUTOMAKE(gsnmp, 0.2.0)
+AC_INIT(gsnmp, 0.3.0, scli@ibr.cs.tu-bs.de)
+AC_REVISION([$Rev$])
+AC_CONFIG_SRCDIR(src/gsnmp.h)
+AM_INIT_AUTOMAKE([-Wall])
 
 dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
 AM_CONFIG_HEADER(config.h)
@@ -42,4 +43,5 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 
 dnl Checks for library functions.
 
-AC_OUTPUT(Makefile src/Makefile tests/Makefile examples/Makefile gsnmp.lsm gsnmp.spec gsnmp.pc)
+AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile examples/Makefile gsnmp.lsm gsnmp.spec gsnmp.pc])
+AC_OUTPUT()

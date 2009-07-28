@@ -1,4 +1,4 @@
-INCLUDES		= $(GNET_CFLAGS) -I$(top_srcdir)/src
+AM_CPPFLAGS		= $(GNET_CFLAGS) -I$(top_srcdir)/src
 
 noinst_PROGRAMS		= gsnmp-test
 

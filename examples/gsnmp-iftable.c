@@ -38,17 +38,18 @@ show_ifentry(if_mib_ifEntry_t *ifEntry)
 static void
 show_iftable(GNetSnmp *snmp)
 {
+    GError *error = NULL;
     if_mib_ifEntry_t **ifTable;
     int i;
     gchar *s;
 
-    s = gnet_uri_get_string(gnet_snmp_get_uri(snmp));
+    s = gnet_snmp_get_uri_string(snmp);
     g_print("Interface table at <%s>:\n", s);
     g_free(s);
 
     if_mib_get_ifTable(snmp, &ifTable, IF_MIB_IFDESCR | IF_MIB_IFTYPE
-		       | IF_MIB_IFADMINSTATUS | IF_MIB_IFOPERSTATUS);
-    if (! snmp->error_status && ifTable) {
+		       | IF_MIB_IFADMINSTATUS | IF_MIB_IFOPERSTATUS, &error);
+    if (! error && ! snmp->error_status && ifTable) {
 	for (i = 0; ifTable[i]; i++) {
 	    show_ifentry(ifTable[i]);
 	}
@@ -83,12 +84,11 @@ main(int argc, char **argv)
     }
 
     for (i = 1; i < argc; i++) {
+	g_clear_error(&error);
 	s = gnet_snmp_new_string(argv[i], &error);
-	if (! s) {
-	    g_printerr("%s: %s\n", g_get_prgname(),
-		       (error && error->message) ? error->message
-		       : "creating SNMP session failed");
-	    return 1;
+	if (error) {
+	    g_printerr("%s: %s\n", g_get_prgname(), error->message);
+	    continue;
 	}
 
 	for (r = 0; r < repeats; r++) {

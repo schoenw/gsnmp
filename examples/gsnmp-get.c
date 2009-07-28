@@ -84,12 +84,18 @@ print(gpointer data, gpointer user)
 static void
 walk(GNetSnmp *s, GList *vbl, int sflag)
 {
+    GError *error = NULL;
     GList *out = NULL;
 
-    out = gnet_snmp_sync_walk(s, vbl);
+    out = gnet_snmp_sync_walk(s, vbl, &error);
+    if (error) {
+	g_printerr("%s: %s\n", g_get_prgname(), error->message);
+	g_clear_error(&error);
+	goto cleanup;
+    }
     if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR
 	&& s->error_status != GNET_SNMP_PDU_ERR_NOSUCHNAME) {
-	g_printerr("snmp error: %s @ %d\n",
+	g_printerr("%s: snmp error: %s @ %d\n", g_get_prgname(),
 		   gnet_snmp_enum_get_label(gnet_snmp_enum_error_table,
 					    s->error_status),
 		   s->error_index);
@@ -109,10 +115,16 @@ static void
 next(GNetSnmp *s, GList *vbl, int sflag)
 {
     GList *out;
+    GError *error = NULL;
     
-    out = gnet_snmp_sync_getnext(s, vbl);
+    out = gnet_snmp_sync_getnext(s, vbl, &error);
+    if (error) {
+	g_printerr("%s: snmp error: %s\n", g_get_prgname(), error->message);
+	g_clear_error(&error);
+	return;
+    }
     if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
-	g_printerr("snmp error: %s @ %d\n",
+	g_printerr("%s: snmp error: %s @ %d\n", g_get_prgname(),
 		   gnet_snmp_enum_get_label(gnet_snmp_enum_error_table,
 					    s->error_status),
 		   s->error_index);
@@ -131,10 +143,16 @@ static void
 get(GNetSnmp *s, GList *vbl, int sflag)
 {
     GList *out;
+    GError *error = NULL;
     
-    out = gnet_snmp_sync_get(s, vbl);
+    out = gnet_snmp_sync_get(s, vbl, &error);
+    if (error) {
+	g_printerr("%s: %s\n", g_get_prgname(), error->message);
+	g_clear_error(&error);
+	return;
+    }
     if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
-	g_printerr("snmp error: %s @ %d\n",
+	g_printerr("%s: snmp error: %s @ %d\n", g_get_prgname(),
 		   gnet_snmp_enum_get_label(gnet_snmp_enum_error_table,
 					    s->error_status),
 		   s->error_index);
@@ -181,11 +199,12 @@ main(int argc, char **argv)
     }
 
     for (i = 1; i < argc; i++) {
-	uri = gnet_snmp_parse_uri(argv[i]);
+	g_clear_error(&error);
+	uri = gnet_snmp_parse_uri(argv[i], &error);
 	if (! uri) {
 	    g_printerr("%s: invalid snmp uri: %s\n",
 		       g_get_prgname(), argv[i]);
-	    return 1;
+	    continue;
 	}
 	
 	if (! gnet_snmp_parse_path(uri->path, &vbl, &type, &error)) {
@@ -193,7 +212,7 @@ main(int argc, char **argv)
 		g_printerr("%s: %s\n", g_get_prgname(), error->message);
 	    }
 	    gnet_uri_delete(uri);
-	    return 1;
+	    continue;
 	}
 	
 	g_print("%s ", argv[i]);
@@ -209,10 +228,16 @@ main(int argc, char **argv)
 	    break;
 	}
 	
-	s = gnet_snmp_new_uri(uri);
+	s = gnet_snmp_new_uri(uri, &error);
+	if (error) {
+	    g_printerr("%s: %s\n", g_get_prgname(), error->message);
+            gnet_uri_delete(uri);
+	    continue;
+	}
 	if (! s) {
 	    g_printerr("%s: unable to create session\n", g_get_prgname());
-	    return 1;
+            gnet_uri_delete(uri);
+	    continue;
 	}
 	
 	for (r = 0; r < repeats; r++) {

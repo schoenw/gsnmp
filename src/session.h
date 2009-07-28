@@ -46,8 +46,7 @@ typedef void     (*GNetSnmpTimeFunc) (GNetSnmp *snmp,
 /* XXX this structure should be completely private XXX */
 
 struct _GNetSnmp {
-    GNetSnmpTDomain  tdomain;
-    GInetAddr       *taddress;
+    GNetSnmpTAddress *taddress;
     GURI	    *uri;
     gint32           error_status;
     guint32	     error_index;
@@ -84,14 +83,15 @@ typedef enum
  */
 
 GNetSnmp*	gnet_snmp_new		(void);
-GNetSnmp*	gnet_snmp_new_uri	(const GURI *uri);
-GNetSnmp*	gnet_snmp_new_string	(const gchar *string, GError **error);
+GNetSnmp*	gnet_snmp_new_uri	(const GURI *uri,
+					 GError **error);
+GNetSnmp*	gnet_snmp_new_string	(const gchar *string,
+					 GError **error);
 GNetSnmp*	gnet_snmp_clone		(GNetSnmp *snmp);
 void		gnet_snmp_delete	(GNetSnmp *snmp);
 
 void		gnet_snmp_set_transport	(GNetSnmp *snmp,
-					 GNetSnmpTDomain tdomain,
-					 GInetAddr *taddress);
+					 GNetSnmpTAddress *taddress);
 void		gnet_snmp_set_sec_name	(GNetSnmp *snmp,
 					 GString *name);
 void		gnet_snmp_set_sec_model (GNetSnmp *snmp,
@@ -115,31 +115,42 @@ GString*	gnet_snmp_get_ctxt_name	(const GNetSnmp *snmp);
 guint		gnet_snmp_get_timeout	(const GNetSnmp *snmp);
 guint		gnet_snmp_get_retries	(const GNetSnmp *snmp);
 GNetSnmpVersion	gnet_snmp_get_version	(const GNetSnmp *snmp);
-GURI*		gnet_snmp_get_uri	(GNetSnmp *snmp);
+gchar*		gnet_snmp_get_uri_string(GNetSnmp *snmp);
+
+void		gnet_snmp_update_uri	(GNetSnmp *snmp);
 
 gpointer	gnet_snmp_async_set	(GNetSnmp *snmp,
-					 GList *vbl);
+					 GList *vbl,
+					 GError **error);
 gpointer	gnet_snmp_async_set	(GNetSnmp *snmp,
-					 GList *vbl);
+					 GList *vbl,
+					 GError **error);
 gpointer	gnet_snmp_async_get	(GNetSnmp *snmp,
-					 GList *vbl);
+					 GList *vbl,
+					 GError **error);
 gpointer	gnet_snmp_async_getnext	(GNetSnmp *snmp,
-					 GList *vbl);
+					 GList *vbl,
+					 GError **error);
 gpointer	gnet_snmp_async_getbulk	(GNetSnmp *snmp,
 					 GList *vbl,
 					 guint32 nonrep,
-					 guint32 maxrep);
+					 guint32 maxrep,
+					 GError **error);
 
 GList*		gnet_snmp_sync_set	(GNetSnmp *snmp,
-					 GList *vbl);
+					 GList *vbl,
+					 GError **error);
 GList*		gnet_snmp_sync_get      (GNetSnmp *snmp,
-					 GList *vbl);
+					 GList *vbl,
+					 GError **error);
 GList*		gnet_snmp_sync_getnext  (GNetSnmp *snmp,
-					 GList *vbl);
+					 GList *vbl,
+					 GError **error);
 GList*		gnet_snmp_sync_getbulk  (GNetSnmp *snmp,
 					 GList *vbl,
 					 guint32 nonrep,
-					 guint32 maxrep);
+					 guint32 maxrep,
+					 GError **error);
 
 /* Is it necessary to support multiple walks per session (with shared
    callbacks anyway)? If we drop this feature, we could merge the walk
@@ -155,9 +166,11 @@ GNetSnmpWalk*	gnet_snmp_walk_new	(GNetSnmp *snmp,
 					 gpointer data);
 void		gnet_snmp_walk_delete	(GNetSnmpWalk *walk);
 
-void		gnet_snmp_async_walk	(GNetSnmpWalk *walk);
+void		gnet_snmp_async_walk	(GNetSnmpWalk *walk,
+					 GError **error);
 GList*		gnet_snmp_sync_walk	(GNetSnmp *snmp,
-					 GList *vbl);
+					 GList *vbl,
+					 GError **error);
 
 /* Is it necessary to support multiple takes per session (with shared
    callbacks anyway)? If we drop this feature, we could merge the table
@@ -173,9 +186,11 @@ GNetSnmpTable*	gnet_snmp_table_new	(GNetSnmp *snmp,
 					 gpointer data);
 void		gnet_snmp_table_delete	(GNetSnmpTable *table);
 
-void		gnet_snmp_async_table	(GNetSnmpTable *table);
-GList*		gnet_snmp_sync_table	(GNetSnmp *snmp,
-					 GList *vbl);
+void		gnet_snmp_async_table	(GNetSnmpTable *table,
+					 GError **error);
+GList*		gnet_snmp_sync_table	(GNetSnmp *snmp, 
+					 GList *vbl,
+					 GError **error);
 
 typedef struct _GNetSnmpRequest {
     GNetSnmpDoneFunc callback;
@@ -183,8 +198,7 @@ typedef struct _GNetSnmpRequest {
     GNetSnmp        *session;
     GNetSnmpPdu      pdu;
     struct sockaddr *address;
-    GNetSnmpTDomain  tdomain;
-    GInetAddr       *taddress;
+    GNetSnmpTAddress *taddress;
     GTimeVal         timer;
     guint            retries;
     guint            timeoutval;

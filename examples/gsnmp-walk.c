@@ -81,14 +81,14 @@ print(gpointer data, gpointer user)
 static void
 walk(GNetSnmp *s, int sflag)
 {
-    GURI *uri;
+    GError *error = NULL;
     GNetSnmpVarBind *vb;
     GList *in = NULL, *out = NULL;
     guint32 iso_org[] = { 1, 3, 6, 1, 2 };	/* SNMPv2-SMI::mib-2 */
+    gchar *name;
 
-    uri = gnet_snmp_get_uri(s);
-    if (uri) {
-	gchar *name = gnet_uri_get_string(uri);
+    name = gnet_snmp_get_uri_string(s);
+    if (name) {
 	g_print("walking <%s>:\n", name);
 	g_free(name);
     }
@@ -96,10 +96,14 @@ walk(GNetSnmp *s, int sflag)
     vb = gnet_snmp_varbind_new(iso_org, G_N_ELEMENTS(iso_org),
 			       GNET_SNMP_VARBIND_TYPE_NULL, NULL, 0);
     in = g_list_append(in, vb);
-    out = gnet_snmp_sync_walk(s, in);
+    out = gnet_snmp_sync_walk(s, in, &error);
+    if (error) {
+	g_printerr("%s: %s\n", g_get_prgname(), error->message);
+	goto cleanup;
+    }
     if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR
 	&& s->error_status != GNET_SNMP_PDU_ERR_NOSUCHNAME) {
-	g_printerr("snmp error: %s @ %d\n",
+	g_printerr("%s: snmp error: %s @ %d\n", g_get_prgname(),
 		   gnet_snmp_enum_get_label(gnet_snmp_enum_error_table,
 					    s->error_status),
 		   s->error_index);

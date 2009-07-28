@@ -44,7 +44,7 @@ gint	gnet_snmp_compare_oids	(const guint32 *oid1, const gsize len1,
  * abbreviated URIs.
  */
 
-GURI*	gnet_snmp_parse_uri	(const gchar *string);
+GURI*	gnet_snmp_parse_uri	(const gchar *string, GError **error);
 
 /*
  * Parse the query contained in 2nd element of a path of the snmp: URI

@@ -423,7 +423,7 @@ gnet_snmp_compare_oids(const guint32 *oid1, const gsize len1,
 
 
 GURI*
-gnet_snmp_parse_uri(const gchar *uri_string)
+gnet_snmp_parse_uri(const gchar *uri_string, GError **error)
 {
     GURI *uri;
     gchar *string;
@@ -439,15 +439,23 @@ gnet_snmp_parse_uri(const gchar *uri_string)
        (which still would have to be written as "[::1]"). */
     
     uri = gnet_uri_new(string);
-    if (uri && !uri->scheme && !uri->hostname) {
-	gnet_uri_delete(uri);
-	uri = NULL;
-    }
-    if (uri && strcmp(uri->scheme, "snmp") != 0) {
+
+    if (uri && uri->scheme
+	&& (strcmp(uri->scheme, "snmp") != 0 && strcmp(uri->scheme, "file") != 0)) {
 	gnet_uri_delete(uri);
 	return NULL;
     }
-    
+
+    if (uri && uri->scheme && strcmp(uri->scheme, "snmp") == 0 && !uri->hostname) {
+	gnet_uri_delete(uri);
+	uri = NULL;
+    }
+
+    if (uri && ! uri->scheme && strchr(string, '/')) {
+	uri = gnet_uri_new_fields_all("file", NULL, NULL, 0,
+				      string, NULL, NULL);
+    }
+
     if (! uri) {
 	gchar *hostname = NULL, *userinfo = NULL, *port = NULL;
 	
@@ -455,7 +463,7 @@ gnet_snmp_parse_uri(const gchar *uri_string)
 	if (hostname) {
 	    userinfo = string;
 	    *hostname = 0;
-	    hostname++;
+		hostname++;
 	} else {
 	    hostname = string;
 	}
@@ -468,14 +476,14 @@ gnet_snmp_parse_uri(const gchar *uri_string)
 	
 	uri = gnet_uri_new_fields_all("snmp", userinfo, hostname,
 				      port ? atoi(port) : 161,
-				      "", NULL, NULL);
+					  "", NULL, NULL);
     }
 
     if (uri && !uri->userinfo) {
 	gnet_uri_set_userinfo(uri, "public");
     }
 
-    if (uri && uri->port == 0) {
+    if (uri && uri->scheme && strcmp(uri->scheme, "snmp") == 0 && uri->port == 0) {
 	gnet_uri_set_port(uri, 161);
     }
 

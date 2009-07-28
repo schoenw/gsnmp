@@ -37,8 +37,7 @@
  */
 
 gboolean
-gnet_snmp_dispatcher_send_pdu(GNetSnmpTDomain tDomain,
-			      GInetAddr *tAddress,
+gnet_snmp_dispatcher_send_pdu(GNetSnmpTAddress *tAddress,
 			      GNetSnmpVersion version,
 			      GNetSnmpSecModel sec_model,
 			      GString *sec_name,
@@ -101,7 +100,7 @@ gnet_snmp_dispatcher_send_pdu(GNetSnmpTDomain tDomain,
     if (community) g_free(community);
     gnet_snmp_ber_enc_delete(ber, &start, &len);
     
-    if (!gnet_snmp_transport_send(tDomain, tAddress, start, len, error))
+    if (!gnet_snmp_transport_send(tAddress, start, len, error))
 	return FALSE;
 
     return TRUE;
@@ -112,8 +111,7 @@ gnet_snmp_dispatcher_send_pdu(GNetSnmpTDomain tDomain,
  */
 
 gboolean
-gnet_snmp_dispatcher_recv_msg(GNetSnmpTDomain tDomain,
-			      GInetAddr *tAddress,
+gnet_snmp_dispatcher_recv_msg(GNetSnmpTAddress *tAddress,
 			      guchar *buffer,
 			      gsize buffer_len,
 			      GError **error)

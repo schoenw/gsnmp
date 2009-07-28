@@ -25,7 +25,8 @@
 #define __GNET_SNMP_TRANSPORT_H__
 
 /*
- * Enumeration for the SNMP transport domains we care of.
+ * Transport address representation for the different SNMP transport
+ * domains.
  */
 
 typedef enum {
@@ -34,8 +35,26 @@ typedef enum {
     GNET_SNMP_TDOMAIN_UDP_IPV6	= 2,
     GNET_SNMP_TDOMAIN_IPX	= 3,	/* RFC 3417 */
     GNET_SNMP_TDOMAIN_TCP_IPV4	= 4,	/* RFC 3430 */
-    GNET_SNMP_TDOMAIN_TCP_IPV6	= 5	/* RFC 3430 */
+    GNET_SNMP_TDOMAIN_TCP_IPV6	= 5,	/* RFC 3430 */
+    GNET_SNMP_TDOMAIN_LOCAL	= 6
 } GNetSnmpTDomain;
+
+typedef struct {
+    GNetSnmpTDomain domain;
+    union {
+	GInetAddr *inetaddr;
+	gchar     *path;
+    };
+} GNetSnmpTAddress;
+
+GNetSnmpTAddress*	gnet_snmp_taddress_new(void);
+GNetSnmpTAddress*	gnet_snmp_taddress_new_inet(GNetSnmpTDomain domain,
+						    GInetAddr* addr);
+GNetSnmpTAddress*	gnet_snmp_taddress_new_path(GNetSnmpTDomain domain,
+						    gchar *path);
+GNetSnmpTAddress*	gnet_snmp_taddress_clone(GNetSnmpTAddress *taddr);
+gchar*			gnet_snmp_taddress_get_short_name(const GNetSnmpTAddress *taddr);
+void			gnet_snmp_taddress_delete(GNetSnmpTAddress *taddr);
 
 /*
  * The maximum datagram size we are prepared to deal with.
@@ -51,6 +70,7 @@ typedef enum
 {
     GNET_SNMP_TRANSPORT_ERROR_SEND,
     GNET_SNMP_TRANSPORT_ERROR_RECV,
+    GNET_SNMP_TRANSPORT_ERROR_SOCKET,
     GNET_SNMP_TRANSPORT_ERROR_CONNECT,
     GNET_SNMP_TRANSPORT_ERROR_REGISTER,
     GNET_SNMP_TRANSPORT_ERROR_UNSUPPORTED
@@ -64,8 +84,7 @@ GQuark	 gnet_snmp_transport_error_quark();
  * The entrance into the transport module.
  */
 
-gboolean gnet_snmp_transport_send	(GNetSnmpTDomain tdomain,
-					 GInetAddr *taddress,
+gboolean gnet_snmp_transport_send	(GNetSnmpTAddress *taddress,
 					 guchar *msg,
 					 guint msg_len,
 					 GError **error);

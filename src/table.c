@@ -173,7 +173,7 @@ g_snmp_table_done_callback(GNetSnmp *snmp,
     }
     /* g_list_free(cb_vbl); ?? */
     
-    table->request = gnet_snmp_async_getnext(table->snmp, nobjs);
+    table->request = gnet_snmp_async_getnext(table->snmp, nobjs, NULL);
 #if 0
     g_list_foreach(nobjs, (GFunc) gnet_snmp_varbind_delete, NULL);
     g_list_free(nobjs);
@@ -250,9 +250,9 @@ gnet_snmp_table_delete(GNetSnmpTable *table)
 
 
 void
-gnet_snmp_async_table(GNetSnmpTable *table)
+gnet_snmp_async_table(GNetSnmpTable *table, GError **error)
 {
-    table->request = gnet_snmp_async_getnext(table->snmp, table->orig_objs);
+    table->request = gnet_snmp_async_getnext(table->snmp, table->orig_objs, error);
 }
 
 
@@ -285,14 +285,14 @@ cb_row(GNetSnmp *snmp, GList *rowlist, int index_len, gpointer *data)
 
 
 GList *
-gnet_snmp_sync_table(GNetSnmp *s, GList *in)
+gnet_snmp_sync_table(GNetSnmp *s, GList *in, GError **error)
 {
     GNetSnmpTable *table;
     GList *tablelist = NULL;
 
     table = gnet_snmp_table_new(s, in, cb_error, cb_row, cb_finish, &tablelist);
 
-    gnet_snmp_async_table(table);
+    gnet_snmp_async_table(table, error);
 
     loop = g_main_new(TRUE);
     while (loop && g_main_is_running(loop)) {

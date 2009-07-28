@@ -634,7 +634,12 @@ test_ber_octets()
 static void
 test_snmp_uri_parser()
 {
+#if 1
     GURI *uri;
+#else
+    GNetSnmp *snmp;
+    GError *error = NULL;
+#endif
     int i;
 
     static const gchar *testcases[] = {
@@ -656,6 +661,10 @@ test_snmp_uri_parser()
 	"snmp://[::1]:162/",		"snmp://public@[::1]:162/",
 	"snmp://public@[::1]:163/",	"snmp://public@[::1]:163/",
 
+	/* file URIs for local domain sockets */
+
+	"file:/tmp/socket",		"file:/tmp/socket",
+	
         /* abbreviated URIs which we also accept for convenience */
 
 	"localhost",			"snmp://public@localhost:161/",
@@ -674,15 +683,18 @@ test_snmp_uri_parser()
 //	"[::1]:161",			"snmp://public@[::1]:161/",
 //	"public@[::1]:161",		"snmp://public@[::1]:161/",
 
+	"/tmp/socket",			"file:/tmp/socket",
+
 	NULL, NULL
     };
     
     for (i = 0; testcases[i]; i++) {
-	uri = gnet_snmp_parse_uri(testcases[i++]);
+#if 1
+	uri = gnet_snmp_parse_uri(testcases[i++], NULL);
 	g_printerr("testcases[%d] %s\n", i-1, testcases[i-1]);
 	if (uri) {
 	    gchar *s = gnet_uri_get_string(uri);
-	    // g_printerr("%s-> %s\n", testcases[i], s);
+	    g_printerr("%s-> %s\n", testcases[i], s);
 	    g_assert(strcmp(s, testcases[i]) == 0);
 	    g_free(s);
 	} else {
@@ -691,6 +703,21 @@ test_snmp_uri_parser()
 	if (uri) {
 	    gnet_uri_delete(uri);
 	}
+#else
+	snmp = gnet_snmp_new_string(testcases[i++], &error);
+	g_printerr("testcases[%d] %s\n", i-1, testcases[i-1]);
+	if (snmp && !error) {
+	    gchar *s = gnet_snmp_get_uri_string(snmp);
+	    g_printerr("%s-> %s\n", testcases[i], s);
+	    g_assert(strcmp(s, testcases[i]) == 0);
+	    g_free(s);
+	} else {
+	    g_assert(testcases[i] == NULL);
+	}
+	if (snmp) {
+	    gnet_snmp_delete(snmp);
+	}
+#endif
     }
 }
 

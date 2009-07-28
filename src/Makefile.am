@@ -1,4 +1,4 @@
-INCLUDES = $(GNET_CFLAGS)
+AM_CPPFLAGS = $(GNET_CFLAGS)
 
 lib_LTLIBRARIES		= libgsnmp.la
 libgsnmp_la_SOURCES	= ber.c ber.h			\

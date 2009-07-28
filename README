@@ -1,6 +1,6 @@
 			      GNET-SNMP
 
-	    Copyright (C) 2002-2007 Juergen Schoenwaelder
+	    Copyright (C) 2002-2009 Juergen Schoenwaelder
 
   GNET-SNMP is an SNMP library implementation based on glib [1] and
   gnet [2]. This library has been developed as part of the scli [3]

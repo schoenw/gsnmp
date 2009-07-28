@@ -12,10 +12,16 @@
 static void
 ping(GNetSnmp *s, int sflag)
 {
+    GError *error = NULL;
     snmpv2_mib_system_t *system;
 
     snmpv2_mib_get_system(s, &system,
-			  SNMPV2_MIB_SYSUPTIME | SNMPV2_MIB_SYSDESCR);
+			  SNMPV2_MIB_SYSUPTIME | SNMPV2_MIB_SYSDESCR, &error);
+    if (error) {
+	g_printerr("%s: %s\n", g_get_prgname(), error->message);
+	g_clear_error(&error);
+	goto cleanup;
+    }
     if (s->error_status != GNET_SNMP_PDU_ERR_NOERROR) {
 	g_printerr("%s: snmp error: %s @ %d\n", g_get_prgname(),
 		   gnet_snmp_enum_get_label(gnet_snmp_enum_error_table,
@@ -64,12 +70,11 @@ main(int argc, char **argv)
     }
 
     for (i = 1; i < argc; i++) {
+	g_clear_error(&error);
 	s = gnet_snmp_new_string(argv[i], &error);
-	if (! s) {
-	    g_printerr("%s: %s\n", g_get_prgname(),
-		       (error && error->message) ? error->message
-		       : "creating SNMP session failed");
-	    return 1;
+	if (error) {
+	    g_printerr("%s: %s\n", g_get_prgname(), error->message);
+	    continue;
 	}
 	
 	for (r = 0; r < repeats; r++) {
@@ -81,4 +86,3 @@ main(int argc, char **argv)
     
     return 0;
 }
-
