@@ -649,6 +649,10 @@ gboolean
 gnet_snmp_transport_send(GNetSnmpTAddress *taddress,
 			 guchar *msg, guint msg_len, GError **error)
 {
+#define INITIALIZED_UDP_IPV4 0x01
+#define INITIALIZED_UDP_IPV6 0x02
+#define INITIALIZED_TCP_IPV4 0x04
+#define INITIALIZED_LOCAL    0x10
     static int initialized = 0;
 
     g_return_val_if_fail(taddress, FALSE);
@@ -663,12 +667,28 @@ gnet_snmp_transport_send(GNetSnmpTAddress *taddress,
 
     switch (taddress->domain) {
     case GNET_SNMP_TDOMAIN_UDP_IPV4:
+	if (! (initialized & INITIALIZED_UDP_IPV4)) {
+	    if (! udp_ipv4_init(error)) return FALSE;
+	    initialized |= INITIALIZED_UDP_IPV4;
+	}
 	return udp_ipv4_send_message(taddress, msg, msg_len, error);
     case GNET_SNMP_TDOMAIN_TCP_IPV4:
+	if (! (initialized & INITIALIZED_TCP_IPV4)) {
+	    if (! tcp_ipv4_init(error)) return FALSE;
+	    initialized |= INITIALIZED_TCP_IPV4;
+	}
 	return tcp_ipv4_send_message(taddress, msg, msg_len, error);
     case GNET_SNMP_TDOMAIN_UDP_IPV6:
+	if (! (initialized & INITIALIZED_UDP_IPV6)) {
+	    if (! udp_ipv6_init(error)) return FALSE;
+	    initialized |= INITIALIZED_UDP_IPV4;
+	}
 	return udp_ipv6_send_message(taddress, msg, msg_len, error);
     case GNET_SNMP_TDOMAIN_LOCAL:
+	if (! (initialized & INITIALIZED_LOCAL)) {
+	    if (! unix_init(error)) return FALSE;
+	    initialized |= INITIALIZED_LOCAL;
+	}
 	return unix_send_message(taddress, msg, msg_len, error);
     default:
 	if (error) {
