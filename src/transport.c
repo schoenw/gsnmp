@@ -657,14 +657,6 @@ gnet_snmp_transport_send(GNetSnmpTAddress *taddress,
 
     g_return_val_if_fail(taddress, FALSE);
 
-    if (! initialized) {		/* xxx race condition xxx */
-	if (! *error) udp_ipv4_init(error);
-	if (! *error) tcp_ipv4_init(error);
-	if (! *error) udp_ipv6_init(error);
-	if (! *error) unix_init(error);
-	initialized = 1;
-    }
-
     switch (taddress->domain) {
     case GNET_SNMP_TDOMAIN_UDP_IPV4:
 	if (! (initialized & INITIALIZED_UDP_IPV4)) {
