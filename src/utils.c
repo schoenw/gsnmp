@@ -302,9 +302,11 @@ gnet_snmp_attr_assign(GList *vbl,
 	     if (gp) *gp = (gpointer) vb->value.ui8v;
 	     break;
 	 case GNET_SNMP_VARBIND_TYPE_OBJECTID:
+	     if (gp) *gp = (gpointer) vb->value.ui32v;
+	     break;
 	 case GNET_SNMP_VARBIND_TYPE_IPADDRESS:
 	 case GNET_SNMP_VARBIND_TYPE_OPAQUE:
-	     *gp = (gpointer) vb->value.ui32;
+	     if (gp) *gp = (gpointer) vb->value.ui8v;
 	     break;
 	 case GNET_SNMP_VARBIND_TYPE_COUNTER64:
 	     if (gp) *gp = (gpointer) &(vb->value.ui64);
