@@ -314,7 +314,8 @@ gnet_snmp_attr_assign(GList *vbl,
 	 default:
 	     break;
 	 }
-	 if (gp && attributes[i].len_offset) {
+	 if (gp && attributes[i].len_offset
+	     && (!(attributes[i].flags & GSNMP_ATTR_FLAG_FIXED_LENGTH))) {
 	     guint16 *lp;
 	     lp = (guint16 *) G_STRUCT_MEMBER_P(p, attributes[i].len_offset);
 	     *lp = vb->value_len;
