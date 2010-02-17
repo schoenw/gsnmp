@@ -115,6 +115,7 @@ GString*	gnet_snmp_get_ctxt_name	(const GNetSnmp *snmp);
 guint		gnet_snmp_get_timeout	(const GNetSnmp *snmp);
 guint		gnet_snmp_get_retries	(const GNetSnmp *snmp);
 GNetSnmpVersion	gnet_snmp_get_version	(const GNetSnmp *snmp);
+GNetSnmpTDomain gnet_snmp_get_tdomain	(const GNetSnmp *snmp);
 gchar*		gnet_snmp_get_uri_string(GNetSnmp *snmp);
 
 void		gnet_snmp_update_uri	(GNetSnmp *snmp);

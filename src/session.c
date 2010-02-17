@@ -343,6 +343,16 @@ gnet_snmp_get_version(const GNetSnmp *snmp)
     return snmp->version;
 }
 
+GNetSnmpTDomain
+gnet_snmp_get_tdomain(const GNetSnmp *snmp)
+{
+    g_return_val_if_fail(snmp, 0);
+
+    g_return_val_if_fail(snmp->taddress, 0);
+
+    return snmp->taddress->domain;
+}
+
 void
 gnet_snmp_set_sec_name(GNetSnmp *snmp, GString *name)
 {

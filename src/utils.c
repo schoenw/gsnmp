@@ -459,6 +459,16 @@ gnet_snmp_parse_uri(const gchar *uri_string, GError **error)
 				      string, NULL, NULL);
     }
 
+    /*
+     * Kill the uri parsing state if we still do not have a
+     * scheme so that we get a URI assembled manually below.
+     */
+
+    if (uri && ! uri->scheme) {
+	gnet_uri_delete(uri);
+	uri = NULL;
+    }
+
     if (! uri) {
 	gchar *hostname = NULL, *userinfo = NULL, *port = NULL;
 	
