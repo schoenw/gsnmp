@@ -1,18 +1,101 @@
-2006-08-22 12:48  Jürgen Schönwälder <j.schoenwaelder@iu-bremen.de>
+2009-11-27 15:40  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
+
+	* src/utils.c: Fixing gnet_snmp_attr_assign() to treat pointer
+	  types properly and to pay attention to whether gp is a valid
+	  pointer.
+
+2009-08-11 05:56  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
+
+	* src/transport.c: Removing the old socket initialization code.
+
+2009-08-09 12:15  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
+
+	* src/transport.c: Delaying the transport initializations until the
+	  first message of a given transport is sent. This suppresses
+	  warnings on machines that do not support IPv6.
+
+2009-07-28 10:28  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
+
+	* NEWS, src/utils.c: Editorial changes.
+
+2009-07-28 10:23  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
+
+	* NEWS, README, autogen.sh, config.h.in, configure.ac,
+	  examples/Makefile.am, examples/atm-mib.c, examples/atm-mib.h,
+	  examples/atm-tc-mib.c, examples/atm-tc-mib.h, examples/atm.c,
+	  examples/gsnmp-get.c, examples/gsnmp-iftable.c,
+	  examples/gsnmp-ping.c, examples/gsnmp-stub-ping.c,
+	  examples/gsnmp-walk.c, examples/ianaiftype-mib.c,
+	  examples/ianaiftype-mib.h, examples/if-mib.c, examples/if-mib.h,
+	  examples/snmpv2-mib.c, examples/snmpv2-mib.h,
+	  examples/snmpv2-tc.c, examples/snmpv2-tc.h, src/Makefile.am,
+	  src/dispatch.c, src/dispatch.h, src/message.h, src/session.c,
+	  src/session.h, src/table.c, src/transport.c, src/transport.h,
+	  src/utils.c, src/utils.h, src/walk.c, tests/Makefile.am,
+	  tests/gsnmp-test.c: This is a fairly large checking that changes
+	  the API functions to enable error reporting via the Gerror
+	  mechanism. Addition of a local (Unix domain) socket transport and
+	  rewrite of the other transports to use the GError reporting
+	  mechanism. This required the introduction of a proper
+	  GNetSnmpTAddress that can handle different notions of transport
+	  endpoints. The code now support file: URIs for the new local
+	  (Unix domain) transport.
+
+2008-07-15 21:36  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
+
+	* src/utils.c, src/utils.h: Added support for fixed length string
+	  types.
+
+2007-01-02 22:10  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
+
+	* examples/Makefile.am: Ensure that gsnmp-get.1 is copied into the
+	  distribution.
+
+2007-01-02 21:52  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
+
+	* examples/gsnmp-get.1: Initial manual page for gsnmp-get. (The
+	  name might change once I find a better one. Use scli if you need
+	  something decent. ;-)
+
+2007-01-02 21:48  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
+
+	* examples/Makefile.am, tests/Makefile.am: Use top_srcdir instead
+	  of top_builddir for the -I switches so that VPATH builds (make
+	  distcheck) actually work.
+
+2007-01-02 21:34  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
+
+	* ChangeLog, NEWS, README: Final touches for the 0.2.0 release.
+
+2007-01-02 21:29  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
+
+	* AUTHORS.xml, Makefile.am, configure.ac, examples/Makefile.am,
+	  tests/Makefile.am: Do not install testing executables. Added a
+	  toplevel target to build the changelog from the svn log messages.
+
+2006-10-18 06:02  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
+
+	* examples/gsnmp-get.c, examples/gsnmp-iftable.c,
+	  examples/gsnmp-ping.c, examples/gsnmp-stub-ping.c,
+	  examples/gsnmp-walk.c: Removed the debug option since there is a
+	  generic mechanism now in the gsnmp library itself to set debug
+	  flags.
+
+2006-08-22 12:48  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
 
 	* src/dispatch.c, src/gsnmp.h, src/message.c, src/pdu.c, src/pdu.h,
 	  src/session.c, src/transport.h, src/utils.c, src/utils.h: Patch
 	  from Frank Strauss which makes gsnmp work again (a big big thanks
 	  for his efforts to fix my code).
 
-2006-02-16 23:49  Jürgen Schönwälder <j.schoenwaelder@iu-bremen.de>
+2006-02-16 23:49  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
 
 	* examples/atm.c, examples/gsnmp-get.c, examples/gsnmp-iftable.c,
 	  examples/gsnmp-stub-ping.c, examples/gsnmp-walk.c: Added
 	  gsnmp-get (which support RFC 4088) and changed the other programs
 	  to use and support the standard gsnmp options.
 
-2006-02-13 22:25  Jürgen Schönwälder <j.schoenwaelder@iu-bremen.de>
+2006-02-13 22:25  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
 
 	* examples/Makefile.am, examples/atm-mib.c, examples/atm.c,
 	  examples/gsnmp-iftable.c, examples/gsnmp-ping.c,
@@ -26,44 +109,44 @@
 	  processing, to add more support for applications and to cleanup
 	  many details and documentation.
 
-2006-02-09 00:57  Jürgen Schönwälder <j.schoenwaelder@iu-bremen.de>
+2006-02-09 00:57  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
 
 	* src/ber.h, src/pdu.h: Fixed some typos, nothing technically.
 
-2006-01-28 00:26  Jürgen Schönwälder <j.schoenwaelder@iu-bremen.de>
+2006-01-28 00:26  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
 
 	* README, gsnmp.spec.in: mostly administrative updates
 
-2006-01-26 13:02  Jürgen Schönwälder <j.schoenwaelder@iu-bremen.de>
+2006-01-26 13:02  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
 
 	* Makefile.am, src/ber.c, src/dispatch.c, src/message.c,
 	  src/message.h, src/pdu.c, tests/gsnmp-test.c: Use gsize for all
 	  size related variables/parameters.
 
-2005-06-13 00:24  Jürgen Schönwälder <j.schoenwaelder@iu-bremen.de>
+2005-06-13 00:24  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
 
 	* .deps, ChangeLog: updated changelog (using svn2cl) and remove
 	  some garbage
 
-2004-10-21 21:56  Jürgen Schönwälder <j.schoenwaelder@iu-bremen.de>
+2004-10-21 21:56  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
 
 	* gsnmp.pc.in: Depend on gnet rather than glib.
 
-2004-10-21 21:35  Jürgen Schönwälder <j.schoenwaelder@iu-bremen.de>
+2004-10-21 21:35  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
 
 	* src/transport.c: Do not bail out if a transport is not available.
 
-2004-10-18 23:22  Jürgen Schönwälder <j.schoenwaelder@iu-bremen.de>
+2004-10-18 23:22  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
 
 	* autogen.sh: Fixed the name of the package.
 
-2004-10-18 23:14  Jürgen Schönwälder <j.schoenwaelder@iu-bremen.de>
+2004-10-18 23:14  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
 
 	* Makefile.in, aclocal.m4, examples/Makefile.in, src/Makefile.in,
 	  tests/Makefile.in: Removed files that are automatically
 	  regenerated by autogen.sh.
 
-2004-10-15 15:17  Jürgen Schönwälder <j.schoenwaelder@iu-bremen.de>
+2004-10-15 15:17  Jürgen Schönwälder <j.schoenwaelder@jacobs-university.de>
 
 	* .deps, .deps/getopt.P, .deps/getopt1.P, .deps/gsnmp.P,
 	  .deps/xmalloc.P, AUTHORS, COPYING, ChangeLog, Makefile.am,
