@@ -82,13 +82,13 @@ struct _SNMP_AUTH
 
 
 void gnet_snmp_password_to_key_md5	(guchar *password, gsize password_len,
-					 guchar *key);
-void gnet_snmp_localize_key_md5		(guchar *key,
+					 guchar *key, gsize *keylen);
+void gnet_snmp_localize_key_md5		(guchar *key, gsize *keylen,
 					 guchar *engineID, gsize engineID_len);
 
 void gnet_snmp_password_to_key_sha	(guchar *password, gsize password_len,
-					 guchar *key);
-void gnet_snmp_localize_key_sha		(guchar *key,
+					 guchar *key, gsize *keylen);
+void gnet_snmp_localize_key_sha		(guchar *key, gsize *keylen,
 					 guchar *engineID, gsize engineID_len);
 
 #endif /* __GNET_SNMP_USM_H__ */

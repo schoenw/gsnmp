@@ -141,6 +141,7 @@
  * \param password password (not necessarily NUL terminated).
  * \param password_len length of the password (must be positive).
  * \param key pointer to memory large enough to hold the key.
+ * \param keylen length of the key (in/out)
  *
  * Convert the password into a key by implementing the algorithm
  * defined in RFC 3414 appendix A.2.1 using MD5 as the oneway hash
@@ -149,16 +150,16 @@
 
 void
 gnet_snmp_password_to_key_md5(guchar *password, gsize password_len,
-			      guchar *key)
+			      guint8 *key, gsize *keylen)
 {
-    GMD5   *gmd5;
+    GChecksum *gmd5;
     guchar *cp, password_buf[64];
     gulong password_index = 0;
     gulong count = 0, i;
 
     g_assert(password_len);
     
-    gmd5 = gnet_md5_new_incremental();
+    gmd5 = g_checksum_new(G_CHECKSUM_MD5);
 
     /**********************************************/
     /* Use while loop until we've done 1 Megabyte */
@@ -166,25 +167,25 @@ gnet_snmp_password_to_key_md5(guchar *password, gsize password_len,
     
     while (count < 1048576) {
 	cp = password_buf;
-	for(i = 0; i < 64; i++) {
+	for (i = 0; i < 64; i++) {
 	    /*************************************************/
 	    /* Take the next octet of the password, wrapping */
 	    /* to the beginning of the password as necessary.*/
 	    /*************************************************/
 	    *cp++ = password[ password_index++ % password_len ];
         }
-	gnet_md5_update(gmd5, (gchar *) password_buf, 64);
+	g_checksum_update(gmd5, (guchar *) password_buf, 64);
 	count += 64;
     }
-    gnet_md5_final(gmd5);
 
-    g_memmove(key, gnet_md5_get_digest(gmd5), GNET_MD5_HASH_LENGTH);
-    gnet_md5_delete(gmd5);
+    g_checksum_get_digest(gmd5, key, keylen);
+    g_checksum_free(gmd5);
 }
 
 /** Localize a key using MD5.
  *
  * \param key pointer to memory which holds a key.
+ * \param keylen length of the key
  * \param engineID pointer to memory which holds an SNMP engine ID.
  * \param engineID_len length of the engine ID (between 5 and 32 inclusive).
  *
@@ -194,20 +195,20 @@ gnet_snmp_password_to_key_md5(guchar *password, gsize password_len,
  */
 
 void
-gnet_snmp_localize_key_md5(guchar *key, guchar *engineID, gsize engineID_len)
+gnet_snmp_localize_key_md5(guchar *key, gsize *keylen,
+			   guchar *engineID, gsize engineID_len)
 {
-    GMD5   *gmd5;
-    guchar password_buf[64];
+    GChecksum *gmd5;
 
-    g_assert(engineID_len > 4 && engineID_len < 33);
+    g_assert(key && keylen && engineID
+	     && engineID_len > 4 && engineID_len < 33);
 
-    g_memmove(password_buf, key, 16);
-    g_memmove(password_buf+16, engineID, engineID_len);
-    g_memmove(password_buf+16+engineID_len, key, 16);
-
-    gmd5 = gnet_md5_new((gchar *) password_buf, 32+engineID_len);
-    g_memmove(key, gnet_md5_get_digest(gmd5), GNET_MD5_HASH_LENGTH);
-    gnet_md5_delete(gmd5);
+    gmd5 = g_checksum_new(G_CHECKSUM_MD5);
+    g_checksum_update(gmd5, key, *keylen);
+    g_checksum_update(gmd5, engineID, engineID_len);
+    g_checksum_update(gmd5, key, *keylen);
+    g_checksum_get_digest(gmd5, key, keylen);
+    g_checksum_free(gmd5);
 }
 
 /** Convert password into a key using SHA.
@@ -215,6 +216,7 @@ gnet_snmp_localize_key_md5(guchar *key, guchar *engineID, gsize engineID_len)
  * \param password password (not necessarily NUL terminated)
  * \param password_len length of the password (must be positive)
  * \param key pointer to memory large enough to hold the key
+ * \param keylen length of the key (in/out)
  *
  * Convert the password into a key by implementing the algorithm
  * defined in RFC 3414 appendix A.2.1 using SHA as the oneway hash
@@ -223,16 +225,16 @@ gnet_snmp_localize_key_md5(guchar *key, guchar *engineID, gsize engineID_len)
 
 void
 gnet_snmp_password_to_key_sha(guchar *password, gsize password_len,
-			      guchar *key)
+			      guchar *key, gsize *keylen)
 {
-    GSHA   *gsha;
+    GChecksum *gsha;
     guchar *cp, password_buf[64];
     gulong password_index = 0;
     gulong count = 0, i;
 
     g_assert(password_len);
     
-    gsha = gnet_sha_new_incremental();
+    gsha = g_checksum_new(G_CHECKSUM_SHA1);
 
     /**********************************************/
     /* Use while loop until we've done 1 Megabyte */
@@ -247,18 +249,18 @@ gnet_snmp_password_to_key_sha(guchar *password, gsize password_len,
 	    /*************************************************/
 	    *cp++ = password[ password_index++ % password_len ];
         }
-	gnet_sha_update(gsha, (gchar *) password_buf, 64);
+	g_checksum_update(gsha, (guchar *) password_buf, 64);
 	count += 64;
     }
-    gnet_sha_final(gsha);
 
-    g_memmove(key, gnet_sha_get_digest(gsha), GNET_SHA_HASH_LENGTH);
-    gnet_sha_delete(gsha);
+    g_checksum_get_digest(gsha, key, keylen);
+    g_checksum_free(gsha);
 }
 
 /** Localize a key using SHA.
  *
  * \param key pointer to memory which holds a key
+ * \param keylen length of the key
  * \param engineID pointer to memory which holds an SNMP engine ID
  * \param engineID_len length of the engine ID (between 5 and 32 inclusive)
  *
@@ -268,18 +270,18 @@ gnet_snmp_password_to_key_sha(guchar *password, gsize password_len,
  */
 
 void
-gnet_snmp_localize_key_sha(guchar *key, guchar *engineID, gsize engineID_len)
+gnet_snmp_localize_key_sha(guchar *key, gsize *keylen,
+			   guchar *engineID, gsize engineID_len)
 {
-    GSHA   *gsha;
-    guchar password_buf[72];
+    GChecksum *gsha;
 
-    g_assert(engineID_len > 4 && engineID_len < 33);
+    g_assert(key && keylen && engineID
+	     && engineID_len > 4 && engineID_len < 33);
 
-    g_memmove(password_buf, key, 20);
-    g_memmove(password_buf+20, engineID, engineID_len);
-    g_memmove(password_buf+20+engineID_len, key, 20);
-
-    gsha = gnet_sha_new((gchar *) password_buf, 40+engineID_len);
-    g_memmove(key, gnet_sha_get_digest(gsha), GNET_SHA_HASH_LENGTH);
-    gnet_sha_delete(gsha);
+    gsha = g_checksum_new(G_CHECKSUM_SHA1);
+    g_checksum_update(gsha, key, *keylen);
+    g_checksum_update(gsha, engineID, engineID_len);
+    g_checksum_update(gsha, key, *keylen);
+    g_checksum_get_digest(gsha, key, keylen);
+    g_checksum_free(gsha);
 }

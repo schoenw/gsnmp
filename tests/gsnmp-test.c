@@ -20,6 +20,7 @@ test_md5_key_localization()
 {
     char *password = "maplesyrup";
     guchar key[GNET_MD5_HASH_LENGTH];
+    gsize keylen = GNET_MD5_HASH_LENGTH;
     
     guchar engineid[] =
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -33,10 +34,11 @@ test_md5_key_localization()
 	{ 0x52, 0x6f, 0x5e, 0xed, 0x9f, 0xcc, 0xe2, 0x6f,
 	  0x89, 0x64, 0xc2, 0x93, 0x07, 0x87, 0xd8, 0x2b };
 
-    gnet_snmp_password_to_key_md5((guchar *) password, strlen(password), key);
+    gnet_snmp_password_to_key_md5((guchar *) password, strlen(password),
+				  key, &keylen);
     g_assert(memcmp(key, digest1, GNET_MD5_HASH_LENGTH) == 0);
 
-    gnet_snmp_localize_key_md5(key, engineid, G_N_ELEMENTS(engineid));
+    gnet_snmp_localize_key_md5(key, &keylen, engineid, G_N_ELEMENTS(engineid));
     g_assert(memcmp(key, digest2, GNET_MD5_HASH_LENGTH) == 0);
 }
 
@@ -50,6 +52,7 @@ test_sha_key_localization()
 {
     char *password = "maplesyrup";
     guchar key[GNET_SHA_HASH_LENGTH];
+    gsize keylen = GNET_SHA_HASH_LENGTH;
     
     guchar engineid[] =
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -63,10 +66,11 @@ test_sha_key_localization()
 	{ 0x66, 0x95, 0xfe, 0xbc, 0x92, 0x88, 0xe3, 0x62, 0x82, 0x23,
 	  0x5f, 0xc7, 0x15, 0x1f, 0x12, 0x84, 0x97, 0xb3, 0x8f, 0x3f };
 
-    gnet_snmp_password_to_key_sha((guchar *) password, strlen(password), key);
+    gnet_snmp_password_to_key_sha((guchar *) password, strlen(password),
+				  key, &keylen);
     g_assert(memcmp(key, digest1, GNET_SHA_HASH_LENGTH) == 0);
 
-    gnet_snmp_localize_key_sha(key, engineid, G_N_ELEMENTS(engineid));
+    gnet_snmp_localize_key_sha(key, &keylen, engineid, G_N_ELEMENTS(engineid));
     g_assert(memcmp(key, digest2, GNET_SHA_HASH_LENGTH) == 0);
 }
 
