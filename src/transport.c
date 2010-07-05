@@ -238,6 +238,7 @@ tcp_ipv4_send_message(GNetSnmpTAddress *taddress,
 {
     GIOChannel *channel;
     gsize len;
+    gboolean isnew = FALSE;
     
     g_return_val_if_fail(taddress
 		 && taddress->domain == GNET_SNMP_TDOMAIN_TCP_IPV4, FALSE);
@@ -258,6 +259,7 @@ tcp_ipv4_send_message(GNetSnmpTAddress *taddress,
 	    }
 	    return FALSE;
 	}
+	isnew = TRUE;
     }
 
     channel = gnet_tcp_socket_get_io_channel(tcp_ipv4_socket);
@@ -281,9 +283,12 @@ tcp_ipv4_send_message(GNetSnmpTAddress *taddress,
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_PACKET) {
 	dump_packet(msg, msg_len);
     }
-    
-    g_io_add_watch(channel, (G_IO_IN | G_IO_PRI),
-		   gaga, tcp_ipv4_receive_message);
+
+    if (isnew) {
+	g_io_add_watch(channel, (G_IO_IN | G_IO_PRI),
+		       gaga, tcp_ipv4_receive_message);
+    }
+
     if (G_IO_ERROR_NONE != gnet_io_channel_writen(channel, msg,
 						  msg_len, &len)) {
 	if (error) {
@@ -561,6 +566,7 @@ unix_send_message(GNetSnmpTAddress *taddress,
 {
     GIOChannel *channel;
     gsize len;
+    gboolean isnew = FALSE;
     
     g_return_val_if_fail(taddress
 		 && taddress->domain == GNET_SNMP_TDOMAIN_LOCAL, FALSE);
@@ -593,6 +599,7 @@ unix_send_message(GNetSnmpTAddress *taddress,
 	    }
 	    return FALSE;
 	}
+	isnew = TRUE;
     }
 
     channel = gnet_unix_socket_get_io_channel(unix_socket);
@@ -618,9 +625,12 @@ unix_send_message(GNetSnmpTAddress *taddress,
     if (gnet_snmp_debug_flags & GNET_SNMP_DEBUG_PACKET) {
 	dump_packet(msg, msg_len);
     }
-    
-    g_io_add_watch(channel, (G_IO_IN | G_IO_PRI),
-		   gaga, unix_receive_message);
+
+    if (isnew) {
+	g_io_add_watch(channel, (G_IO_IN | G_IO_PRI),
+		       gaga, unix_receive_message);
+    }
+
     if (G_IO_ERROR_NONE != gnet_io_channel_writen(channel, msg,
 						  msg_len, &len)) {
 	if (error) {
