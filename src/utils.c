@@ -492,7 +492,7 @@ gnet_snmp_parse_uri(const gchar *uri_string, GError **error)
 					  "", NULL, NULL);
     }
 
-    if (uri && !uri->userinfo) {
+    if (uri && strcmp(uri->scheme, "snmp") == 0 && !uri->userinfo) {
 	gnet_uri_set_userinfo(uri, "public");
     }
 
