@@ -3,6 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(gsnmp, 0.3.0, scli@ibr.cs.tu-bs.de)
 AC_REVISION([$Rev$])
 AC_CONFIG_SRCDIR(src/gsnmp.h)
+AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall])
 
 dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
